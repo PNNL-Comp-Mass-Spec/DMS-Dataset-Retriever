@@ -44,9 +44,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DatasetFileOrDirectory.cs" />
     <Compile Include="DatasetInfo.cs" />
     <Compile Include="DatasetRetrieverOptions.cs" />
     <Compile Include="DMSDatasetRetriever.cs" />
+    <Compile Include="InstrumentClassInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
