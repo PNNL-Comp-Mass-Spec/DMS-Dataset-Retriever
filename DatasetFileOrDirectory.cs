@@ -20,6 +20,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Relative target file (or directory) path
         /// </summary>
+        /// <remarks>Use this when a file (or directory) residues in a subdirectory below the dataset directory</remarks>
         public string RelativeTargetPath { get; }
 
         public MyEMSLReader.Downloader MyEMSLDownloader { get; }
@@ -75,6 +76,14 @@ namespace DMSDatasetRetriever
 
             MyEMSLDownloader = downloader;
             RetrieveFromMyEMSL = (downloader != null);
+        }
+
+        public override string ToString()
+        {
+            if (IsDirectory)
+                return "Directory: " + SourcePath;
+
+            return "File: " + SourcePath;
         }
     }
 }
