@@ -7,7 +7,7 @@ using PRISMDatabaseUtils;
 
 namespace DMSDatasetRetriever
 {
-    class DMSDatasetRetriever : PRISM.EventNotifier
+    class DMSDatasetRetriever : EventNotifier
     {
         #region "Constants and Enums"
 
@@ -117,15 +117,27 @@ namespace DMSDatasetRetriever
         {
             try
             {
+                int debugLevel;
+                if (Options.VerboseMode)
+                    debugLevel = 2;
+                else
+                    debugLevel = 1;
+
+                var fileTools = new FileTools("DMSDatasetRetriever", debugLevel);
+                RegisterEvents(fileTools);
+
                 foreach (var sourceDataset in sourceFilesByDataset)
                 {
-                    foreach (var sourceFile in sourceDataset.Value)
+                    var datasetInfo = sourceDataset.Key;
+                    foreach (var sourceItem in sourceDataset.Value)
                     {
-                        if (Options.PreviewMode || true)
+                        if (sourceItem.IsDirectory)
                         {
-                            Console.WriteLine("Copy {0} to\n  {1}",
-                                sourceFile.SourcePath,
-                                Path.Combine(outputDirectory.FullName, sourceFile.RelativeTargetPath));
+                            CopyDirectoryToTarget(fileTools, datasetInfo, sourceItem, outputDirectory);
+                        }
+                        else
+                        {
+                            CopyFileToTarget(fileTools, datasetInfo, sourceItem, outputDirectory);
                         }
                     }
                 }
@@ -137,6 +149,99 @@ namespace DMSDatasetRetriever
                 ReportError("Error in " + nameof(CopyDatasetFilesToTarget), ex);
                 return false;
             }
+        }
+
+        private void CopyDirectoryToTarget(
+            FileTools fileTools,
+            DatasetInfo datasetInfo,
+            DatasetFileOrDirectory sourceDirectoryInfo,
+            FileSystemInfo outputDirectory)
+        {
+            try
+            {
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryInfo.SourcePath);
+
+                if (!sourceDirectory.Exists)
+                {
+                    ReportWarning("Directory not found, nothing to copy: " + sourceDirectory.FullName);
+                    return;
+                }
+
+                foreach (var sourceFile in sourceDirectory.GetFiles())
+                {
+                    // RelativeTargetPath should have the target directory name, possibly preceded by a subdirectory name
+                    var relativeTargetPath = Path.Combine(sourceDirectoryInfo.RelativeTargetPath, sourceFile.Name);
+
+                    var sourceFileInfo = new DatasetFileOrDirectory(
+                        sourceDirectoryInfo.DatasetInfo,
+                        sourceFile,
+                        relativeTargetPath,
+                        sourceDirectoryInfo.MyEMSLDownloader);
+
+                    CopyFileToTarget(fileTools, datasetInfo, sourceFileInfo, outputDirectory);
+                }
+            }
+            catch (Exception ex)
+            {
+                ReportError("Error in " + nameof(CopyDirectoryToTarget), ex);
+            }
+        }
+
+        private void CopyFileToTarget(
+            FileTools fileTools,
+            DatasetInfo datasetInfo,
+            DatasetFileOrDirectory sourceFileInfo,
+            FileSystemInfo outputDirectory)
+        {
+            try
+            {
+                var sourceFile = new FileInfo(sourceFileInfo.SourcePath);
+
+                // RelativeTargetPath should have the target file name, possibly preceded by a subdirectory name
+                var targetFile = new FileInfo(Path.Combine(outputDirectory.FullName, sourceFileInfo.RelativeTargetPath));
+
+                if (!sourceFile.Exists)
+                {
+                    ReportWarning("File not found, nothing to copy: " + sourceFile.FullName);
+                    return;
+                }
+
+                if (targetFile.Exists)
+                {
+                    if (sourceFile.Length == targetFile.Length &&
+                        Math.Abs(sourceFile.LastWriteTime.Subtract(targetFile.LastWriteTime).TotalSeconds) < 2.5)
+                    {
+                        OnDebugEvent("Skipping existing, identical file: " + FileTools.CompactPathString(targetFile.FullName, 60));
+                        return;
+                    }
+                }
+
+                if (Options.PreviewMode)
+                {
+                    Console.WriteLine("Copy {0} to\n  {1}", sourceFile.FullName, targetFile.FullName);
+                }
+                else
+                {
+                    var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
+                }
+
+                if (Options.PreviewMode || Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
+                    return;
+
+                UpdateChecksumFile(datasetInfo, sourceFile, targetFile, outputDirectory);
+
+            }
+            catch (Exception ex)
+            {
+                ReportError("Error in " + nameof(CopyFileToTarget), ex);
+            }
+        }
+
+        private void UpdateChecksumFile(DatasetInfo datasetInfo, FileInfo sourceFile, FileInfo targetFile, FileSystemInfo outputDirectory)
+        {
+            Console.WriteLine("ToDo: compute and/or validate checksums for " + targetFile.FullName);
+            Console.WriteLine();
+
         }
 
         private bool FindSourceFiles(
@@ -170,7 +275,7 @@ namespace DMSDatasetRetriever
                         sourceItem = new FileInfo(dataset.DatasetFileName);
                     }
 
-                    var relativeTargetPath = GetRelativeTargetPath(sourceItem, dataset.TargetDirectory);
+                    var relativeTargetPath = GetRelativeTargetPath(sourceItem, dataset.TargetDatasetName, dataset.TargetDirectory);
 
                     if (dataset.InstrumentDataPurged)
                     {
@@ -468,11 +573,25 @@ namespace DMSDatasetRetriever
             string relativeTargetPath;
             if (sourceItem is FileInfo sourceFile)
             {
-                relativeTargetPath = sourceFile.Name;
+                if (string.IsNullOrWhiteSpace(targetDatasetName))
+                {
+                    relativeTargetPath = sourceFile.Name;
+                }
+                else
+                {
+                    relativeTargetPath = Path.GetFileNameWithoutExtension(targetDatasetName) + sourceFile.Extension;
+                }
             }
             else if (sourceItem is DirectoryInfo sourceDirectory)
             {
-                relativeTargetPath = sourceDirectory.Name;
+                if (string.IsNullOrWhiteSpace(targetDatasetName))
+                {
+                    relativeTargetPath = sourceDirectory.Name;
+                }
+                else
+                {
+                    relativeTargetPath = targetDatasetName;
+                }
             }
             else
             {
