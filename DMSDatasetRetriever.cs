@@ -161,61 +161,9 @@ namespace DMSDatasetRetriever
 
                     if (string.IsNullOrWhiteSpace(dataset.DatasetFileName))
                     {
-                        if (InstrumentClassData.Count == 0)
-                        {
-                            var classInfoLoaded = LoadInstrumentClassData(dbTools);
-                            if (!classInfoLoaded)
-                            {
-                                ReportWarning("Unable to load data from V_Instrument_Class_Export; cannot auto-determine the instrument file name");
-                                return false;
-                            }
-                        }
-
-                        if (!InstrumentClassData.TryGetValue(dataset.InstrumentClassName, out var instrumentClassInfo))
-                        {
-                            if (dataset.DatasetID > 0)
-                            {
-                                ReportWarning(string.Format(
-                                    "Skipping dataset due to unrecognized instrument class {0}: {1}",
-                                    dataset.InstrumentClassName, dataset.DatasetName));
-                            }
-
+                        sourceItem = GetDefaultInstrumentFileOrDirectory(dbTools, dataset);
+                        if (sourceItem == null)
                             continue;
-                        }
-
-                        switch (instrumentClassInfo.RawDataType)
-                        {
-                            case InstrumentClassInfo.RawDataTypes.DotRawFile:
-                                sourceItem = new FileInfo(dataset.DatasetName + ".raw");
-                                break;
-
-                            case InstrumentClassInfo.RawDataTypes.DotRawFolder:
-                                sourceItem = new DirectoryInfo(dataset.DatasetName + ".raw");
-                                break;
-
-                            case InstrumentClassInfo.RawDataTypes.DotDFolder:
-                                sourceItem = new DirectoryInfo(dataset.DatasetName + ".d");
-                                break;
-
-                            case InstrumentClassInfo.RawDataTypes.DotUimfFile:
-                                sourceItem = new FileInfo(dataset.DatasetName + ".uimf");
-                                break;
-
-                            case InstrumentClassInfo.RawDataTypes.BrukerFt:
-                            case InstrumentClassInfo.RawDataTypes.BrukerTofBaf:
-                            case InstrumentClassInfo.RawDataTypes.DataFolder:
-                                // Unsupported
-                                ReportWarning(string.Format(
-                                    "Skipping dataset due to unsupported RawDataType {0} for instrument class {1}",
-                                    instrumentClassInfo.RawDataType, instrumentClassInfo.InstrumentClassName));
-                                continue;
-
-                            default:
-                                ReportWarning(string.Format(
-                                    "Skipping dataset due to unrecognized RawDataType {0} for instrument class {1}",
-                                    instrumentClassInfo.RawDataType, instrumentClassInfo.InstrumentClassName));
-                                continue;
-                        }
                     }
                     else
                     {
@@ -460,7 +408,62 @@ namespace DMSDatasetRetriever
             return true;
         }
 
-        private string GetRelativeTargetPath(FileSystemInfo sourceItem, string datasetTargetDirectory)
+        private FileSystemInfo GetDefaultInstrumentFileOrDirectory(IDBTools dbTools, DatasetInfo dataset)
+        {
+            if (InstrumentClassData.Count == 0)
+            {
+                var classInfoLoaded = LoadInstrumentClassData(dbTools);
+                if (!classInfoLoaded)
+                {
+                    ReportWarning("Unable to load data from V_Instrument_Class_Export; cannot auto-determine the instrument file name");
+                    return null;
+                }
+            }
+
+            if (!InstrumentClassData.TryGetValue(dataset.InstrumentClassName, out var instrumentClassInfo))
+            {
+                if (dataset.DatasetID > 0)
+                {
+                    ReportWarning(string.Format(
+                        "Skipping dataset due to unrecognized instrument class {0}: {1}",
+                        dataset.InstrumentClassName, dataset.DatasetName));
+                }
+
+                return null;
+            }
+
+            switch (instrumentClassInfo.RawDataType)
+            {
+                case InstrumentClassInfo.RawDataTypes.DotRawFile:
+                    return new FileInfo(dataset.DatasetName + ".raw");
+
+                case InstrumentClassInfo.RawDataTypes.DotRawFolder:
+                    return new DirectoryInfo(dataset.DatasetName + ".raw");
+
+                case InstrumentClassInfo.RawDataTypes.DotDFolder:
+                    return new DirectoryInfo(dataset.DatasetName + ".d");
+
+                case InstrumentClassInfo.RawDataTypes.DotUimfFile:
+                    return new FileInfo(dataset.DatasetName + ".uimf");
+
+                case InstrumentClassInfo.RawDataTypes.BrukerFt:
+                case InstrumentClassInfo.RawDataTypes.BrukerTofBaf:
+                case InstrumentClassInfo.RawDataTypes.DataFolder:
+                    // Unsupported
+                    ReportWarning(string.Format(
+                        "Skipping dataset due to unsupported RawDataType {0} for instrument class {1}",
+                        instrumentClassInfo.RawDataType, instrumentClassInfo.InstrumentClassName));
+                    return null;
+
+                default:
+                    ReportWarning(string.Format(
+                        "Skipping dataset due to unrecognized RawDataType {0} for instrument class {1}",
+                        instrumentClassInfo.RawDataType, instrumentClassInfo.InstrumentClassName));
+                    return null;
+            }
+        }
+
+        private string GetRelativeTargetPath(FileSystemInfo sourceItem, string targetDatasetName, string datasetTargetDirectory)
         {
             string relativeTargetPath;
             if (sourceItem is FileInfo sourceFile)
