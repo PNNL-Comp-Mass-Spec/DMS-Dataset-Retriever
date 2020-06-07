@@ -101,6 +101,13 @@ namespace DMSDatasetRetriever
             HelpText = "Preview the files that would be retrieved")]
         public bool PreviewMode { get; set; }
 
+        /// <summary>
+        /// When true, show more status messages
+        /// </summary>
+        [Option("VerboseMode", "Verbose", "V", HelpShowsDefault = false,
+            HelpText = "When true, show more status messages")]
+        public bool VerboseMode { get; set; }
+
         #endregion
 
         /// <summary>
