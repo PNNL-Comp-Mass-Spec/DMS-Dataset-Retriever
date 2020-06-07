@@ -105,7 +105,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in CopyDatasetFiles", ex);
+                ReportError("Error in " + nameof(CopyDatasetFiles), ex);
                 return false;
             }
         }
@@ -134,7 +134,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in CopyDatasetFilesToTarget", ex);
+                ReportError("Error in " + nameof(CopyDatasetFilesToTarget), ex);
                 return false;
             }
         }
@@ -248,7 +248,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in FindSourceFiles", ex);
+                ReportError("Error in " + nameof(FindSourceFiles), ex);
                 return false;
             }
         }
@@ -298,7 +298,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in GetDatasetInfoFromDMS", ex);
+                ReportError("Error in " + nameof(GetDatasetInfoFromDMS), ex);
                 return false;
             }
         }
@@ -473,7 +473,9 @@ namespace DMSDatasetRetriever
             }
             else
             {
-                throw new Exception("Error in GetRelativeTargetPath; source item is not a file or directory: " + sourceItem);
+                throw new Exception(string.Format(
+                    "Error in {0}; source item is not a file or directory: {1}",
+                    nameof(GetRelativeTargetPath), sourceItem));
             }
 
             if (string.IsNullOrWhiteSpace(datasetTargetDirectory))
@@ -600,7 +602,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in LoadDatasetInfoFile", ex);
+                ReportError("Error in " + nameof(LoadDatasetInfoFile), ex);
                 return false;
             }
         }
@@ -651,7 +653,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in LoadInstrumentClassData", ex);
+                ReportError("Error in " + nameof(LoadInstrumentClassData), ex);
                 return false;
             }
 
@@ -760,7 +762,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in RetrieveDatasets (datasetInfoFile)", ex);
+                ReportError(string.Format("Error in {0} (datasetInfoFile)", nameof(RetrieveDatasets)), ex);
                 return false;
             }
         }
@@ -821,7 +823,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in RetrieveDatasets (datasetList)", ex);
+                ReportError(string.Format("Error in {0} (datasetList)", nameof(RetrieveDatasets)), ex);
                 return false;
             }
         }
