@@ -13,7 +13,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "June 5, 2020";
+        public const string PROGRAM_DATE = "June 7, 2020";
 
         #region "Enums"
 
@@ -49,18 +49,30 @@ namespace DMSDatasetRetriever
 
         #region "Properties"
 
+        /// <summary>
+        /// File listing datasets to retrieve
+        /// </summary>
         [Option("DatasetInfoFile", "DatasetInfoFilePath", "DatasetFile", "InputFile", "i", "input",
             ArgPosition = 1, HelpShowsDefault = false, IsInputFilePath = true,
             HelpText = "Dataset info file path")]
         public string DatasetInfoFilePath { get; set; }
 
+        /// <summary>
+        /// Output directory
+        /// </summary>
         [Option("OutputDirectory", "OutputDirectoryPath", "Output", "o",
             ArgPosition = 2, HelpShowsDefault = false,
             HelpText = "Output directory path")]
         public string OutputDirectoryPath { get; set; }
 
+        /// <summary>
+        /// Checksum file mode enum
+        /// </summary>
         public ChecksumFileType ChecksumFileMode { get; private set; }
 
+        /// <summary>
+        /// Checksum file mode name
+        /// </summary>
         [Option("ChecksumMode", "Checksum", HelpShowsDefault = false,
             HelpText = "Checksum type (None, CPTAC, or MoTrPAC)")]
         public string ChecksumFileModeName

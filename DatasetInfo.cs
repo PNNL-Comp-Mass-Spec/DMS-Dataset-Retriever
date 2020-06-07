@@ -49,7 +49,7 @@ namespace DMSDatasetRetriever
         /// Target directory to which the dataset should be copied
         /// </summary>
         /// <remarks>
-        ///  Typically a directory on the local machine
+        /// Typically a directory on the local machine
         /// </remarks>
         public string TargetDirectory { get; set; }
 
