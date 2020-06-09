@@ -101,11 +101,10 @@ namespace DMSDatasetRetriever
                 var copySuccess = CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
 
                 return copySuccess;
-
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(CopyDatasetFiles), ex);
+                ReportError("Error in CopyDatasetFiles", ex);
                 return false;
             }
         }
@@ -146,7 +145,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(CopyDatasetFilesToTarget), ex);
+                ReportError("Error in CopyDatasetFilesToTarget", ex);
                 return false;
             }
         }
@@ -183,7 +182,8 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(CopyDirectoryToTarget), ex);
+                ReportError("Error in CreateChecksumFiles", ex);
+                return false;
             }
         }
 
@@ -301,7 +301,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(FindSourceFiles), ex);
+                ReportError("Error in FindSourceFiles", ex);
                 return false;
             }
         }
@@ -351,7 +351,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(GetDatasetInfoFromDMS), ex);
+                ReportError("Error in GetDatasetInfoFromDMS", ex);
                 return false;
             }
         }
@@ -595,9 +595,7 @@ namespace DMSDatasetRetriever
             }
             else
             {
-                throw new Exception(string.Format(
-                    "Error in {0}; source item is not a file or directory: {1}",
-                    nameof(GetRelativeTargetPath), sourceItem));
+                throw new Exception("Error in GetRelativeTargetPath; source item is not a file or directory: " + sourceItem);
             }
 
             if (string.IsNullOrWhiteSpace(datasetTargetDirectory))
@@ -725,7 +723,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(LoadDatasetInfoFile), ex);
+                ReportError("Error in LoadDatasetInfoFile", ex);
                 return false;
             }
         }
@@ -885,7 +883,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError(string.Format("Error in {0} (datasetInfoFile)", nameof(RetrieveDatasets)), ex);
+                ReportError("Error in RetrieveDatasetFiles (datasetInfoFile)", ex);
                 return false;
             }
         }
@@ -926,13 +924,13 @@ namespace DMSDatasetRetriever
                 if (datasetList == null)
                 {
                     ReportWarning(string.Format(
-                        "Null value for {0} provided to {1}; cannot continue", nameof(datasetList), nameof(RetrieveDatasets)));
+                        "Null value for {0} provided to RetrieveDatasetFiles; cannot continue", nameof(datasetList)));
                 }
 
                 if (outputDirectory == null)
                 {
                     ReportWarning(string.Format(
-                        "Null value for {0} provided to {1}; cannot continue", nameof(outputDirectory), nameof(RetrieveDatasets)));
+                        "Null value for {0} provided to RetrieveDatasetFiles; cannot continue", nameof(outputDirectory)));
                 }
 
                 var dbTools = DbToolsFactory.GetDBTools(Options.DMSConnectionString);
@@ -949,7 +947,7 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError(string.Format("Error in {0} (datasetList)", nameof(RetrieveDatasets)), ex);
+                ReportError("Error in RetrieveDatasetFiles (datasetList)", ex);
                 return false;
             }
         }
