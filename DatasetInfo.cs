@@ -1,4 +1,7 @@
 ﻿
+using System.Collections.Generic;
+using System.IO;
+
 namespace DMSDatasetRetriever
 {
     class DatasetInfo
@@ -54,6 +57,12 @@ namespace DMSDatasetRetriever
         public string TargetDirectory { get; set; }
 
         /// <summary>
+        /// List of files copied to the target directory (or already present in the target directory)
+        /// </summary>
+        /// <remarks>This list is used to generate the checksum file</remarks>
+        public List<FileInfo> TargetDirectoryFiles { get; }
+
+        /// <summary>
         /// Dataset file name or relative path
         /// This is the file created by the instrument
         /// </summary>
@@ -89,12 +98,15 @@ namespace DMSDatasetRetriever
         /// <param name="datasetName"></param>
         public DatasetInfo(string datasetName)
         {
-            Clear();
             DatasetName = datasetName;
+            TargetDirectoryFiles = new List<FileInfo>();
+
+            Clear();
         }
 
         /// <summary>
         /// Reset all properties except dataset name to empty strings
+        /// Also clears TargetDirectoryFiles
         /// </summary>
         public void Clear()
         {
@@ -109,6 +121,7 @@ namespace DMSDatasetRetriever
 
             TargetDatasetName = string.Empty;
             TargetDirectory = string.Empty;
+            TargetDirectoryFiles.Clear();
 
             DatasetFileName = string.Empty;
             DatasetFileHashSHA1 = string.Empty;
@@ -116,6 +129,10 @@ namespace DMSDatasetRetriever
             DatasetFileSizeBytes = 0;
         }
 
+        /// <summary>
+        /// Show the dataset ID and name
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return string.Format("Dataset ID {0}: {1}", DatasetID, DatasetName);
