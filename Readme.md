@@ -32,7 +32,8 @@ Syntax:
 DMSDatasetRetriever.exe
   /I:DatasetInfoFile [/O:OutputDirectoryPath] 
   [/ChecksumMode:Mode] [/Overwrite] 
-  [/ConnectionString:DMSConnectionString] [/Preview] 
+  [/ConnectionString:DMSConnectionString] 
+  [/Preview] [/Verbose]
 ```
 
 Use `/I` to specify the tab-delimited input file with dataset names
@@ -56,6 +57,8 @@ Use `/ConnectionString` to define the DMS database connection string
 * Defaults to `/ConnectionString:Server=gigasax;Database=DMS5;Trusted_Connection=yes`
 
 Use `/Preview` to simulate retrieving the files
+
+Use `/Verbose` to see additional progress messages at the console
 
 ## Contacts
 
