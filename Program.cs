@@ -81,7 +81,7 @@ namespace DMSDatasetRetriever
                 processor.StatusEvent += Processor_StatusEvent;
                 processor.WarningEvent += Processor_WarningEvent;
 
-                var success = processor.RetrieveDatasets(options.DatasetInfoFilePath, options.OutputDirectoryPath);
+                var success = processor.RetrieveDatasetFiles(options.DatasetInfoFilePath, options.OutputDirectoryPath);
 
                 if (success)
                 {

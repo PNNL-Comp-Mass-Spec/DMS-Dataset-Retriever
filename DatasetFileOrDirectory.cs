@@ -5,6 +5,9 @@ namespace DMSDatasetRetriever
 {
     class DatasetFileOrDirectory
     {
+        /// <summary>
+        /// Dataset info
+        /// </summary>
         public DatasetInfo DatasetInfo { get; }
 
         /// <summary>
@@ -23,20 +26,26 @@ namespace DMSDatasetRetriever
         /// <remarks>Use this when a file (or directory) residues in a subdirectory below the dataset directory</remarks>
         public string RelativeTargetPath { get; }
 
+        /// <summary>
+        /// MyEMSL file downloader
+        /// </summary>
         public MyEMSLReader.Downloader MyEMSLDownloader { get; }
 
+        /// <summary>
+        /// True if the file needs to be retrieved from MyEMSL
+        /// </summary>
         public bool RetrieveFromMyEMSL { get; }
 
         /// <summary>
         /// Constructor for copying a file
         /// </summary>
-        /// <param name="dataset"></param>
+        /// <param name="datasetInfo"></param>
         /// <param name="sourceFilePath"></param>
         /// <param name="relativeTargetFilePath"></param>
         /// <param name="downloader">MyEMSL Downloader</param>
-        public DatasetFileOrDirectory(DatasetInfo dataset, string sourceFilePath, string relativeTargetFilePath, MyEMSLReader.Downloader downloader = null)
+        public DatasetFileOrDirectory(DatasetInfo datasetInfo, string sourceFilePath, string relativeTargetFilePath, MyEMSLReader.Downloader downloader = null)
         {
-            DatasetInfo = dataset;
+            DatasetInfo = datasetInfo;
             SourcePath = sourceFilePath;
             RelativeTargetPath = relativeTargetFilePath;
 
@@ -49,13 +58,17 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor for copying a file or a directory
         /// </summary>
-        /// <param name="dataset"></param>
+        /// <param name="datasetInfo"></param>
         /// <param name="sourceFileOrDirectory"></param>
         /// <param name="relativeTargetPath"></param>
         /// <param name="downloader">MyEMSL Downloader</param>
-        public DatasetFileOrDirectory(DatasetInfo dataset, FileSystemInfo sourceFileOrDirectory, string relativeTargetPath, MyEMSLReader.Downloader downloader = null)
+        public DatasetFileOrDirectory(
+            DatasetInfo datasetInfo,
+            FileSystemInfo sourceFileOrDirectory,
+            string relativeTargetPath,
+            MyEMSLReader.Downloader downloader = null)
         {
-            DatasetInfo = dataset;
+            DatasetInfo = datasetInfo;
 
             if (sourceFileOrDirectory is FileInfo sourceFile)
             {
@@ -78,6 +91,10 @@ namespace DMSDatasetRetriever
             RetrieveFromMyEMSL = (downloader != null);
         }
 
+        /// <summary>
+        /// Show the file or directory path
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             if (IsDirectory)

@@ -307,12 +307,12 @@ namespace DMSDatasetRetriever
         }
 
         private string GetColumnValue(
-            IReadOnlyDictionary<DatasetInfoColumns, int> columnMapping,
             IReadOnlyList<string> rowData,
+            IReadOnlyDictionary<DatasetInfoColumns, int> columnMap,
             DatasetInfoColumns datasetInfoColumn,
             string valueIfMissing)
         {
-            if (!columnMapping.TryGetValue(datasetInfoColumn, out var columnIndex) || columnIndex < 0)
+            if (!columnMap.TryGetValue(datasetInfoColumn, out var columnIndex) || columnIndex < 0)
             {
                 return valueIfMissing;
             }
@@ -360,13 +360,13 @@ namespace DMSDatasetRetriever
         {
             var datasetIDInfoMap = new Dictionary<int, DatasetInfo>();
             var datasetIDs = new List<int>();
-            foreach (var item in datasetList)
+            foreach (var dataset in datasetList)
             {
-                if (item.DatasetID <= 0)
+                if (dataset.DatasetID <= 0)
                     continue;
 
-                datasetIDs.Add(item.DatasetID);
-                datasetIDInfoMap.Add(item.DatasetID, item);
+                datasetIDs.Add(dataset.DatasetID);
+                datasetIDInfoMap.Add(dataset.DatasetID, dataset);
             }
             var datasetIdList = string.Join(", ", datasetIDs);
 
@@ -395,14 +395,14 @@ namespace DMSDatasetRetriever
                 return false;
             }
 
-            var columnMapping = dbTools.GetColumnMapping(columns);
+            var columnMap = dbTools.GetColumnMapping(columns);
 
             foreach (var resultRow in queryResults)
             {
-                var datasetId = dbTools.GetColumnValue(resultRow, columnMapping, "Dataset_ID", -1);
-                var fileHash = dbTools.GetColumnValue(resultRow, columnMapping, "File_Hash");
-                var fileSizeBytes = dbTools.GetColumnValue(resultRow, columnMapping, "File_Size_Bytes", (long)0);
-                var fileNameOrPath = dbTools.GetColumnValue(resultRow, columnMapping, "File_Path");
+                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_ID", -1);
+                var fileHash = dbTools.GetColumnValue(resultRow, columnMap, "File_Hash");
+                var fileSizeBytes = dbTools.GetColumnValue(resultRow, columnMap, "File_Size_Bytes", (long)0);
+                var fileNameOrPath = dbTools.GetColumnValue(resultRow, columnMap, "File_Path");
 
                 if (!datasetIDInfoMap.TryGetValue(datasetId, out var datasetInfo))
                 {
@@ -426,16 +426,16 @@ namespace DMSDatasetRetriever
 
             var quotedDatasetNames = new List<string>();
 
-            foreach (var item in datasetList)
+            foreach (var dataset in datasetList)
             {
-                if (datasetNameInfoMap.ContainsKey(item.DatasetName))
+                if (datasetNameInfoMap.ContainsKey(dataset.DatasetName))
                 {
-                    ReportWarning("Skipping duplicate dataset " + item.DatasetName);
+                    ReportWarning("Skipping duplicate dataset " + dataset.DatasetName);
                     continue;
                 }
 
-                datasetNameInfoMap.Add(item.DatasetName, item);
-                quotedDatasetNames.Add("'" + item.DatasetName.Replace("'", "''").Replace(@"\", "") + "'");
+                datasetNameInfoMap.Add(dataset.DatasetName, dataset);
+                quotedDatasetNames.Add("'" + dataset.DatasetName.Replace("'", "''").Replace(@"\", "") + "'");
             }
 
             var datasetNameList = string.Join(", ", quotedDatasetNames);
@@ -470,11 +470,11 @@ namespace DMSDatasetRetriever
                 return false;
             }
 
-            var columnMapping = dbTools.GetColumnMapping(columns);
+            var columnMap = dbTools.GetColumnMapping(columns);
 
             foreach (var resultRow in queryResults)
             {
-                var datasetName = dbTools.GetColumnValue(resultRow, columnMapping, "Dataset");
+                var datasetName = dbTools.GetColumnValue(resultRow, columnMap, "Dataset");
 
                 if (!datasetNameInfoMap.TryGetValue(datasetName, out var datasetInfo))
                 {
@@ -483,22 +483,22 @@ namespace DMSDatasetRetriever
                     continue;
                 }
 
-                var datasetId = dbTools.GetColumnValue(resultRow, columnMapping, "Dataset_ID", -1);
+                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_ID", -1);
                 if (datasetId > 0)
                 {
                     datasetInfo.DatasetID = datasetId;
                 }
 
-                datasetInfo.InstrumentClassName = dbTools.GetColumnValue(resultRow, columnMapping, "Instrument_Class");
+                datasetInfo.InstrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Class");
 
-                datasetInfo.DatasetDirectoryPath = dbTools.GetColumnValue(resultRow, columnMapping, "Dataset_Folder_Path");
-                datasetInfo.DatasetArchivePath = dbTools.GetColumnValue(resultRow, columnMapping, "Archive_Folder_Path");
+                datasetInfo.DatasetDirectoryPath = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_Folder_Path");
+                datasetInfo.DatasetArchivePath = dbTools.GetColumnValue(resultRow, columnMap, "Archive_Folder_Path");
 
-                var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMapping, "Instrument_Data_Purged", 0);
+                var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Data_Purged", 0);
                 datasetInfo.InstrumentDataPurged = IntToBool(instrumentDataPurged);
 
 
-                var myEmslState = dbTools.GetColumnValue(resultRow, columnMapping, "MyEMSLState", 0);
+                var myEmslState = dbTools.GetColumnValue(resultRow, columnMap, "MyEMSLState", 0);
                 datasetInfo.DatasetInMyEMSL = IntToBool(myEmslState);
             }
 
@@ -663,7 +663,7 @@ namespace DMSDatasetRetriever
 
                 using (var reader = new StreamReader(new FileStream(datasetInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var columnMapping = new Dictionary<DatasetInfoColumns, int>();
+                    var columnMap = new Dictionary<DatasetInfoColumns, int>();
 
                     while (!reader.EndOfStream)
                     {
@@ -671,14 +671,15 @@ namespace DMSDatasetRetriever
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (columnMapping.Count == 0)
+                        if (columnMap.Count == 0)
                         {
-                            if (!ParseHeaderLine(columnMapping, dataLine, DatasetInfoColumnNames))
+                            var headerLineParsed = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, DatasetInfoColumnNames);
+                            if (!headerLineParsed)
                             {
                                 return false;
                             }
 
-                            if (columnMapping[DatasetInfoColumns.DatasetName] < 0)
+                            if (columnMap[DatasetInfoColumns.DatasetName] < 0)
                             {
                                 ReportWarning("Dataset info file is missing the Dataset name column; unable to continue");
                                 return false;
@@ -689,9 +690,9 @@ namespace DMSDatasetRetriever
 
                         var rowData = dataLine.Split('\t').ToList();
 
-                        var datasetName = GetColumnValue(columnMapping, rowData, DatasetInfoColumns.DatasetName, string.Empty);
-                        var targetName = GetColumnValue(columnMapping, rowData, DatasetInfoColumns.TargetName, string.Empty);
-                        var targetDirectory = GetColumnValue(columnMapping, rowData, DatasetInfoColumns.TargetDirectory, string.Empty);
+                        var datasetName = GetColumnValue(rowData, columnMap, DatasetInfoColumns.DatasetName, string.Empty);
+                        var targetName = GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetName, string.Empty);
+                        var targetDirectory = GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetDirectory, string.Empty);
 
                         if (string.IsNullOrWhiteSpace(datasetName))
                         {
@@ -707,7 +708,7 @@ namespace DMSDatasetRetriever
                         datasetList.Add(datasetInfo);
                     }
 
-                    if (columnMapping.Count == 0)
+                    if (columnMap.Count == 0)
                     {
                         ReportWarning("Dataset info file was empty: " + datasetInfoFile.FullName);
                         return false;
@@ -757,14 +758,14 @@ namespace DMSDatasetRetriever
                     return false;
                 }
 
-                var columnMapping = dbTools.GetColumnMapping(columns);
+                var columnMap = dbTools.GetColumnMapping(columns);
 
                 foreach (var resultRow in queryResults)
                 {
-                    var instrumentClassName = dbTools.GetColumnValue(resultRow, columnMapping, "Instrument_Class");
-                    var isPurgable = dbTools.GetColumnValue(resultRow, columnMapping, "Is_Purgable", 0);
-                    var rawDataTypeName = dbTools.GetColumnValue(resultRow, columnMapping, "Raw_Data_Type");
-                    var comment = dbTools.GetColumnValue(resultRow, columnMapping, "Comment");
+                    var instrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Class");
+                    var isPurgable = dbTools.GetColumnValue(resultRow, columnMap, "Is_Purgable", 0);
+                    var rawDataTypeName = dbTools.GetColumnValue(resultRow, columnMap, "Raw_Data_Type");
+                    var comment = dbTools.GetColumnValue(resultRow, columnMap, "Comment");
 
                     var instrumentClassInfo = new InstrumentClassInfo(instrumentClassName, rawDataTypeName, IntToBool(isPurgable), comment);
 
@@ -844,7 +845,7 @@ namespace DMSDatasetRetriever
         /// <param name="datasetInfoFilePath"></param>
         /// <param name="outputDirectoryPath"></param>
         /// <returns></returns>
-        public bool RetrieveDatasets(string datasetInfoFilePath, string outputDirectoryPath)
+        public bool RetrieveDatasetFiles(string datasetInfoFilePath, string outputDirectoryPath)
         {
 
             try
@@ -876,7 +877,7 @@ namespace DMSDatasetRetriever
                     }
                 }
 
-                var success = RetrieveDatasets(datasetList, outputDirectory, false);
+                var success = RetrieveDatasetFiles(datasetList, outputDirectory, false);
 
                 ShowCachedMessages();
 
@@ -895,10 +896,13 @@ namespace DMSDatasetRetriever
         /// <param name="datasetList">Datasets to retrieve</param>
         /// <param name="outputDirectory">Directory where files should be copied</param>
         /// <returns></returns>
-        public bool RetrieveDatasets(List<DatasetInfo> datasetList, DirectoryInfo outputDirectory)
+        // ReSharper disable once UnusedMember.Global
+        public bool RetrieveDatasetFiles(List<DatasetInfo> datasetList, DirectoryInfo outputDirectory)
         {
-            var success = RetrieveDatasets(datasetList, outputDirectory, true);
+            var success = RetrieveDatasetFiles(datasetList, outputDirectory, true);
+
             ShowCachedMessages();
+
             return success;
         }
 
@@ -909,7 +913,7 @@ namespace DMSDatasetRetriever
         /// <param name="outputDirectory">Directory where files should be copied</param>
         /// <param name="clearCachedMessages">When true, clear ErrorMessages and WarningMessages</param>
         /// <returns></returns>
-        private bool RetrieveDatasets(List<DatasetInfo> datasetList, DirectoryInfo outputDirectory, bool clearCachedMessages)
+        private bool RetrieveDatasetFiles(List<DatasetInfo> datasetList, DirectoryInfo outputDirectory, bool clearCachedMessages)
         {
             try
             {

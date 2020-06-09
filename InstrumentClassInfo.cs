@@ -30,6 +30,9 @@ namespace DMSDatasetRetriever
         /// </summary>
         public RawDataTypes RawDataType { get; }
 
+        /// <summary>
+        /// Instrument class comment
+        /// </summary>
         public string Comment { get; set; }
 
         /// <summary>
@@ -58,16 +61,22 @@ namespace DMSDatasetRetriever
             {
                 case "bruker_ft":
                     return RawDataTypes.BrukerFt;
+
                 case "bruker_tof_baf":
                     return RawDataTypes.BrukerTofBaf;
+
                 case "data_folders":
                     return RawDataTypes.DataFolder;
+
                 case "dot_d_folders":
                     return RawDataTypes.DotDFolder;
+
                 case "dot_raw_files":
                     return RawDataTypes.DotRawFile;
+
                 case "dot_uimf_files":
                     return RawDataTypes.DotUimfFile;
+
                 case "dot_raw_folder":
                     return RawDataTypes.DotRawFolder;
 
@@ -76,6 +85,10 @@ namespace DMSDatasetRetriever
             }
         }
 
+        /// <summary>
+        /// Show the instrument class name and raw data type
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return string.Format("{0}: {1}", InstrumentClassName, RawDataType.ToString());
