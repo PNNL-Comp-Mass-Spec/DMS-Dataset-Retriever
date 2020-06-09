@@ -42,7 +42,6 @@ namespace DMSDatasetRetriever
         /// </summary>
         public DatasetRetrieverOptions Options { get; }
 
-
         /// <summary>
         /// List of recent error messages
         /// </summary>
@@ -72,6 +71,10 @@ namespace DMSDatasetRetriever
 
             ErrorMessages = new List<string>();
             WarningMessages = new List<string>();
+
+            DataTableUtils.GetColumnIndexAllowColumnNameMatchOnly = true;
+            DataTableUtils.GetColumnIndexAllowFuzzyMatch = true;
+            DataTableUtils.GetColumnValueThrowExceptions = false;
 
             InitializeDatasetInfoFileColumns();
         }
@@ -111,37 +114,19 @@ namespace DMSDatasetRetriever
 
         private bool CopyDatasetFilesToTarget(
             Dictionary<DatasetInfo, List<DatasetFileOrDirectory>> sourceFilesByDataset,
-            // ReSharper disable once SuggestBaseTypeForParameter
             DirectoryInfo outputDirectory)
         {
             try
             {
-                int debugLevel;
-                if (Options.VerboseMode)
-                    debugLevel = 2;
-                else
-                    debugLevel = 1;
+                var fileCopyUtility = new FileCopyUtility(Options);
+                RegisterEvents(fileCopyUtility);
 
-                var fileTools = new FileTools("DMSDatasetRetriever", debugLevel);
-                RegisterEvents(fileTools);
+                fileCopyUtility.ProgressUpdate += FileCopyUtilityOnProgressUpdate;
+                fileCopyUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                foreach (var sourceDataset in sourceFilesByDataset)
-                {
-                    var datasetInfo = sourceDataset.Key;
-                    foreach (var sourceItem in sourceDataset.Value)
-                    {
-                        if (sourceItem.IsDirectory)
-                        {
-                            CopyDirectoryToTarget(fileTools, datasetInfo, sourceItem, outputDirectory);
-                        }
-                        else
-                        {
-                            CopyFileToTarget(fileTools, datasetInfo, sourceItem, outputDirectory);
-                        }
-                    }
-                }
+                var success = fileCopyUtility.CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
 
-                return true;
+                return success;
             }
             catch (Exception ex)
             {
@@ -150,97 +135,24 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void CopyDirectoryToTarget(
-            FileTools fileTools,
-            DatasetInfo datasetInfo,
-            DatasetFileOrDirectory sourceDirectoryInfo,
-            FileSystemInfo outputDirectory)
+        private bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList)
         {
             try
             {
-                var sourceDirectory = new DirectoryInfo(sourceDirectoryInfo.SourcePath);
+                var fileHashUtility = new FileHashUtility(Options);
+                RegisterEvents(fileHashUtility);
 
-                if (!sourceDirectory.Exists)
-                {
-                    ReportWarning("Directory not found, nothing to copy: " + sourceDirectory.FullName);
-                    return;
-                }
+                fileHashUtility.ProgressUpdate += FileHashUtilityOnProgressUpdate;
+                fileHashUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                foreach (var sourceFile in sourceDirectory.GetFiles())
-                {
-                    // RelativeTargetPath should have the target directory name, possibly preceded by a subdirectory name
-                    var relativeTargetPath = Path.Combine(sourceDirectoryInfo.RelativeTargetPath, sourceFile.Name);
-
-                    var sourceFileInfo = new DatasetFileOrDirectory(
-                        sourceDirectoryInfo.DatasetInfo,
-                        sourceFile,
-                        relativeTargetPath,
-                        sourceDirectoryInfo.MyEMSLDownloader);
-
-                    CopyFileToTarget(fileTools, datasetInfo, sourceFileInfo, outputDirectory);
-                }
+                var success = fileHashUtility.CreateChecksumFiles(datasetList);
+                return success;
             }
             catch (Exception ex)
             {
                 ReportError("Error in CreateChecksumFiles", ex);
                 return false;
             }
-        }
-
-        private void CopyFileToTarget(
-            FileTools fileTools,
-            DatasetInfo datasetInfo,
-            DatasetFileOrDirectory sourceFileInfo,
-            FileSystemInfo outputDirectory)
-        {
-            try
-            {
-                var sourceFile = new FileInfo(sourceFileInfo.SourcePath);
-
-                // RelativeTargetPath should have the target file name, possibly preceded by a subdirectory name
-                var targetFile = new FileInfo(Path.Combine(outputDirectory.FullName, sourceFileInfo.RelativeTargetPath));
-
-                if (!sourceFile.Exists)
-                {
-                    ReportWarning("File not found, nothing to copy: " + sourceFile.FullName);
-                    return;
-                }
-
-                if (targetFile.Exists)
-                {
-                    if (sourceFile.Length == targetFile.Length &&
-                        Math.Abs(sourceFile.LastWriteTime.Subtract(targetFile.LastWriteTime).TotalSeconds) < 2.5)
-                    {
-                        OnDebugEvent("Skipping existing, identical file: " + FileTools.CompactPathString(targetFile.FullName, 60));
-                        return;
-                    }
-                }
-
-                if (Options.PreviewMode)
-                {
-                    Console.WriteLine("Copy {0} to\n  {1}", sourceFile.FullName, targetFile.FullName);
-                }
-                else
-                {
-                    var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
-                }
-
-                if (Options.PreviewMode || Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
-                    return;
-
-                UpdateChecksumFile(datasetInfo, sourceFile, targetFile, outputDirectory);
-
-            }
-            catch (Exception ex)
-            {
-                ReportError("Error in " + nameof(CopyFileToTarget), ex);
-            }
-        }
-
-        private void UpdateChecksumFile(DatasetInfo datasetInfo, FileInfo sourceFile, FileInfo targetFile, FileSystemInfo outputDirectory)
-        {
-            Console.WriteLine("ToDo: compute and/or validate checksums for " + targetFile.FullName);
-            Console.WriteLine();
 
         }
 
@@ -774,56 +686,10 @@ namespace DMSDatasetRetriever
             }
             catch (Exception ex)
             {
-                ReportError("Error in " + nameof(LoadInstrumentClassData), ex);
+                ReportError("Error in LoadInstrumentClassData", ex);
                 return false;
             }
 
-        }
-
-        private bool ParseHeaderLine(
-            IDictionary<DatasetInfoColumns, int> columnMapping,
-            string dataLine,
-            Dictionary<DatasetInfoColumns, SortedSet<string>> datasetInfoColumnNames)
-        {
-            columnMapping.Clear();
-            foreach (var candidateColumn in datasetInfoColumnNames)
-            {
-                columnMapping.Add(candidateColumn.Key, -1);
-            }
-
-            var columnNames = dataLine.Split('\t').ToList();
-
-            if (columnNames.Count < 1)
-            {
-                ReportWarning("Invalid header line sent to ParseHeaderLine");
-                return false;
-            }
-
-            var columnIndex = 0;
-            var matchFound = false;
-
-            foreach (var columnName in columnNames)
-            {
-                foreach (var candidateColumn in datasetInfoColumnNames)
-                {
-                    if (!candidateColumn.Value.Contains(columnName))
-                        continue;
-
-                    // Match found
-                    columnMapping[candidateColumn.Key] = columnIndex;
-                    matchFound = true;
-                    break;
-                }
-                columnIndex++;
-            }
-
-            return matchFound;
-        }
-
-        private void ReportError(string message)
-        {
-            ReportError(message, null);
-            ErrorMessages.Add(message);
         }
 
         private void ReportError(string message, Exception ex)
@@ -832,11 +698,19 @@ namespace DMSDatasetRetriever
             ErrorMessages.Add(message);
         }
 
+        private void ReportProgress(string progressMessage, float percentComplete, double percentCompleteOverall)
+        {
+            OnStatusEvent(string.Format(
+                "{0:F1}% complete {1}; {2:F1}% complete overall",
+                percentComplete, progressMessage.ToLower(), percentCompleteOverall));
+        }
+
         private void ReportWarning(string message)
         {
             OnWarningEvent(message);
             WarningMessages.Add(message);
         }
+
         /// <summary>
         /// Read the dataset info file and retrieve the instrument data files for the specified datasets
         /// </summary>
@@ -936,14 +810,22 @@ namespace DMSDatasetRetriever
                 var dbTools = DbToolsFactory.GetDBTools(Options.DMSConnectionString);
                 RegisterEvents(dbTools);
 
-                // Obtain metadata from DMS for dataset in datasetList
+                // Obtain metadata from DMS for datasets in datasetList
                 var success = GetDatasetInfoFromDMS(dbTools, datasetList);
 
                 if (!success)
                     return false;
 
                 var copyFileSuccess = CopyDatasetFiles(dbTools, datasetList, outputDirectory);
-                return true;
+                if (!copyFileSuccess)
+                    return false;
+
+                if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
+                    return true;
+
+                var checksumSuccess = CreateChecksumFiles(datasetList);
+
+                return checksumSuccess;
             }
             catch (Exception ex)
             {
