@@ -977,7 +977,25 @@ namespace DMSDatasetRetriever
                 ConsoleMsgUtils.ShowError(message);
             }
         }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private void FileCopyUtilityOnProgressUpdate(string progressMessage, float percentComplete)
+        {
+            var percentCompleteOverall = percentComplete * 0.5;
+            ReportProgress(progressMessage, percentComplete, percentCompleteOverall);
+        }
+
+        private void FileHashUtilityOnProgressUpdate(string progressMessage, float percentComplete)
+        {
+            var percentCompleteOverall = 0.5 + percentComplete * 0.5;
+            ReportProgress(progressMessage, percentComplete, percentCompleteOverall);
+        }
+
+        #endregion
     }
 
-    #endregion
+
 }

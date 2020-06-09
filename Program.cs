@@ -77,9 +77,11 @@ namespace DMSDatasetRetriever
             {
                 var processor = new DMSDatasetRetriever(options);
 
+                processor.DebugEvent += Processor_DebugEvent;
                 processor.ErrorEvent += Processor_ErrorEvent;
                 processor.StatusEvent += Processor_StatusEvent;
                 processor.WarningEvent += Processor_WarningEvent;
+                processor.SkipConsoleWriteIfNoProgressListener = true;
 
                 var success = processor.RetrieveDatasetFiles(options.DatasetInfoFilePath, options.OutputDirectoryPath);
 
@@ -102,6 +104,11 @@ namespace DMSDatasetRetriever
         }
 
         #region "Event handlers"
+
+        private static void Processor_DebugEvent(string message)
+        {
+            ConsoleMsgUtils.ShowDebugCustom(message, emptyLinesBeforeMessage: 0);
+        }
 
         private static void Processor_ErrorEvent(string message, Exception ex)
         {
