@@ -120,6 +120,36 @@ namespace DMSDatasetRetriever
             }
         }
 
+        private string GetExpectedHeaderLine(IReadOnlyDictionary<ChecksumFileColumns, SortedSet<string>> columnNamesByIdentifier)
+        {
+            var standardColumns = new List<ChecksumFileColumns>();
+
+            if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.CPTAC)
+            {
+                standardColumns.Add(ChecksumFileColumns.SHA1);
+                standardColumns.Add(ChecksumFileColumns.Filename);
+            }
+
+            if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+            {
+                standardColumns.Add(ChecksumFileColumns.Filename);
+                standardColumns.Add(ChecksumFileColumns.Fraction);
+                standardColumns.Add(ChecksumFileColumns.TechnicalReplicate);
+                standardColumns.Add(ChecksumFileColumns.Comment);
+                standardColumns.Add(ChecksumFileColumns.MD5);
+                standardColumns.Add(ChecksumFileColumns.SHA1);
+            }
+
+            var standardColumnNames = new List<string>();
+
+            foreach (var column in standardColumns)
+            {
+                standardColumnNames.Add(columnNamesByIdentifier[column].First());
+            }
+
+            return string.Join("   ", standardColumnNames);;
+        }
+
         /// <summary>
         /// Load an existing checksum file (if it exists)
         /// </summary>
@@ -179,6 +209,13 @@ namespace DMSDatasetRetriever
                         {
                             // Parse the header line
                             var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
+                            if (!validHeaders)
+                            {
+                                OnWarningEvent("The checksum file header line does not contain the expected columns: " + dataLine);
+                                var expectedHeaders = GetExpectedHeaderLine(columnNamesByIdentifier);
+                                OnDebugEvent("Expected headers are: " + expectedHeaders);
+                            }
+
                             continue;
                         }
 
