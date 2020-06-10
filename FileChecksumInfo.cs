@@ -1,4 +1,6 @@
-﻿namespace DMSDatasetRetriever
+﻿using System.IO;
+
+namespace DMSDatasetRetriever
 {
     /// <summary>
     /// This class tracks checksum file information

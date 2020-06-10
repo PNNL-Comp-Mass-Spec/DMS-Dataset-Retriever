@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using PRISM;
 using PRISM.FileProcessor;
 
@@ -12,10 +13,67 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class FileHashUtility : EventNotifier
     {
+        #region "Properties"
+
         /// <summary>
         /// Retrieval options
         /// </summary>
         private DatasetRetrieverOptions Options { get; }
+
+        /// <summary>
+        /// Directory names after the server or bucket name in the remote upload URL
+        /// Names will be separated by the local computer's directory separator character
+        /// </summary>
+        private string RemoteUploadURLDirectoriesToMatch { get; }
+
+        #endregion
+
+        /// <summary>
+        /// Look for any text files in the specified directory, recursively searching subdirectories
+        /// For any not present in processedFiles, append upload commands to the batch file
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="processedFiles"></param>
+        /// <param name="directory"></param>
+        private void AppendTextFilesToBatchFile(TextWriter writer, ISet<string> processedFiles, DirectoryInfo directory)
+        {
+            var textFiles = directory.GetFiles("*.txt", SearchOption.AllDirectories).ToList();
+            if (textFiles.Count == 0)
+            {
+                return;
+            }
+
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var dataFile in textFiles)
+            {
+                if (processedFiles.Contains(dataFile.FullName))
+                {
+                    continue;
+                }
+
+                AppendUploadCommand(writer, processedFiles, dataFile);
+            }
+        }
+
+        private void AppendUploadCommand(TextWriter writer, ISet<string> processedFiles, FileSystemInfo dataFile, string md5Base64 = "")
+        {
+            var remoteUrl = GenerateRemoteUrl(dataFile.FullName);
+
+            string uploadCommand;
+
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (string.IsNullOrWhiteSpace(md5Base64))
+            {
+                uploadCommand = string.Format("gsutil cp {0} {1}", dataFile.FullName, remoteUrl);
+            }
+            else
+            {
+                uploadCommand = string.Format("gsutil -h Content-MD5:{0} cp {1} {2}", md5Base64, dataFile.FullName, remoteUrl);
+            }
+
+            writer.WriteLine(uploadCommand);
+            processedFiles.Add(dataFile.FullName);
+        }
 
         private string ComputeChecksumMD5(FileSystemInfo dataFile, out string base64MD5)
         {
@@ -239,7 +297,11 @@ namespace DMSDatasetRetriever
                     itemsProcessed++;
                 }
 
-                return (successCount == checksumData.Count);
+                var checksumSuccessOverall = (successCount == checksumData.Count);
+
+                CreateUploadBatchFile(checksumData);
+
+                return checksumSuccessOverall;
             }
             catch (Exception ex)
             {
@@ -270,6 +332,114 @@ namespace DMSDatasetRetriever
             }
         }
 
+        private void CreateUploadBatchFile(IReadOnlyDictionary<string, ChecksumFileUpdater> checksumData)
+        {
+            if (Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+            {
+                // Upload batch file creation is not supported for this checksum file type
+                // Nothing to do
+            }
+
+            try
+            {
+                var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}.bat", DateTime.Now);
+                var uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
+
+                if (Options.PreviewMode)
+                {
+                    OnStatusEvent("Would create " + uploadBatchFilePath);
+                    return;
+                }
+
+                Console.WriteLine();
+                OnStatusEvent("Creating " + uploadBatchFilePath);
+
+                // List of files added to the batch file
+                var processedFiles = new SortedSet<string>();
+
+                // List of parent directories that should be checked recursively for additional text files
+                // The number of levels up is defined in Options
+                var parentDirectoryPaths = new SortedSet<string>();
+
+                using (var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    foreach (var item in checksumData)
+                    {
+                        foreach (var dataFile in item.Value.DataFiles)
+                        {
+                            if (processedFiles.Contains(dataFile.FullName))
+                            {
+                                OnWarningEvent("Duplicate file found; skipping " + dataFile.FullName);
+                                continue;
+                            }
+
+                            var fileChecksumInfo = GetFileChecksumInfo(item.Value, dataFile);
+                            var md5Base64 = GetBase64MD5(fileChecksumInfo);
+
+                            AppendUploadCommand(writer, processedFiles, dataFile, md5Base64);
+                        }
+
+                        AppendTextFilesToBatchFile(writer, processedFiles, item.Value.DataFileDirectory);
+
+                        if (Options.ParentDirectoryDepth > 0)
+                        {
+                            var parentDirectory = item.Value.DataFileDirectory.Parent;
+                            for (var i = 2; i <= Options.ParentDirectoryDepth; i++)
+                            {
+                                if (parentDirectory == null)
+                                    break;
+
+                                parentDirectory = parentDirectory.Parent;
+                            }
+
+                            if (parentDirectory != null && !parentDirectoryPaths.Contains(parentDirectory.FullName))
+                                parentDirectoryPaths.Add(parentDirectory.FullName);
+                        }
+
+                        writer.WriteLine();
+                    }
+
+                    // Step through parentDirectoryPaths and look for any unprocessed text files in subdirectories
+                    foreach (var parentDirectory in parentDirectoryPaths)
+                    {
+                        AppendTextFilesToBatchFile(writer, processedFiles, new DirectoryInfo(parentDirectory));
+                    }
+                }
+
+                Console.WriteLine();
+                OnStatusEvent(string.Format("{0} file upload commands written", processedFiles.Count));
+                Console.WriteLine();
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in CreateUploadBatchFile", ex);
+            }
+
+        }
+
+        private string GetBase64MD5(FileChecksumInfo fileChecksumInfo)
+        {
+            if (!string.IsNullOrWhiteSpace(fileChecksumInfo.MD5_Base64))
+                return fileChecksumInfo.MD5_Base64;
+
+            if (string.IsNullOrWhiteSpace(fileChecksumInfo.MD5))
+                return string.Empty;
+
+            var byteArray = new List<byte>();
+            var md5Hash = fileChecksumInfo.MD5;
+
+            for (var i = 0; i < md5Hash.Length; i += 2)
+            {
+                var nextByte = Convert.ToByte(md5Hash.Substring(i, 2), 16);
+                byteArray.Add(nextByte);
+            }
+
+            var base64MD5 = Convert.ToBase64String(byteArray.ToArray());
+
+            return base64MD5;
+        }
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -277,6 +447,70 @@ namespace DMSDatasetRetriever
         public FileHashUtility(DatasetRetrieverOptions options)
         {
             Options = options;
+
+            if (string.IsNullOrWhiteSpace(Options.RemoteUploadBaseURL))
+            {
+                RemoteUploadURLDirectoriesToMatch = string.Empty;
+                return;
+            }
+
+            var directoryMatcher = new Regex("^[a-z]+://[^/]+/(?<Directories>.+)", RegexOptions.IgnoreCase);
+
+            var match = directoryMatcher.Match(Options.RemoteUploadBaseURL);
+            if (!match.Success)
+            {
+                throw new Exception(
+                    "RemoteUploadBaseURL is not of the form " +
+                    "gs://bucket-name/DirectoryA/DirectoryB or " +
+                    "http://server/DirectoryA/DirectoryB or similar; " +
+                    "it is " +
+                    Options.RemoteUploadBaseURL);
+            }
+
+            var uploadUrlDirectories = new List<string>();
+
+            foreach (var pathPart in match.Groups["Directories"].Value.Split('/'))
+            {
+                if (string.IsNullOrEmpty(pathPart))
+                    continue;
+                uploadUrlDirectories.Add(pathPart);
+            }
+
+            RemoteUploadURLDirectoriesToMatch = string.Join(Path.DirectorySeparatorChar.ToString(), uploadUrlDirectories) + Path.DirectorySeparatorChar;
+        }
+
+        private string GenerateRemoteUrl(string fullFilePath)
+        {
+            var charIndex = fullFilePath.LastIndexOf(RemoteUploadURLDirectoriesToMatch, StringComparison.OrdinalIgnoreCase);
+            if (charIndex < 0)
+            {
+                OnWarningEvent(string.Format(
+                    "Could not find '{0}' in the local file path; cannot generate the remote URL for \n  {1}",
+                    RemoteUploadURLDirectoriesToMatch,
+                    fullFilePath));
+
+                if (fullFilePath.Length < 3)
+                    return fullFilePath;
+
+                if (fullFilePath.Substring(1,2).Equals(@":\"))
+                    return fullFilePath.Substring(3).Replace('\\', '/');
+
+                var slashIndex = fullFilePath.IndexOf('\\', 3);
+                if (slashIndex > 0 && slashIndex < fullFilePath.Length - 1)
+                    return fullFilePath.Substring(slashIndex + 1).Replace('\\', '/');
+
+                return fullFilePath.Replace('\\', '/');
+            }
+
+            string remoteUrlBase;
+            if (Options.RemoteUploadBaseURL.EndsWith("/"))
+                remoteUrlBase = Options.RemoteUploadBaseURL;
+            else
+                remoteUrlBase = Options.RemoteUploadBaseURL + "/";
+
+            var remoteUrl = remoteUrlBase + fullFilePath.Substring(charIndex + RemoteUploadURLDirectoriesToMatch.Length).Replace('\\', '/');
+
+            return remoteUrl;
         }
 
         private ChecksumFileUpdater GetChecksumUpdater(
