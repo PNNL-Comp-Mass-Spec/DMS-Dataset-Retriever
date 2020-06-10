@@ -34,6 +34,11 @@
         public string MD5 { get; set; }
 
         /// <summary>
+        /// MD5 hash of the file, Base64 encoded
+        /// </summary>
+        public string MD5_Base64 { get; set; }
+
+        /// <summary>
         /// SHA-1 hash of the file
         /// </summary>
         public string SHA1 { get; set; }
@@ -46,6 +51,7 @@
         {
             FileName = fileName;
             MD5 = string.Empty;
+            MD5_Base64 = string.Empty;
             SHA1 = string.Empty;
 
             Fraction = 0;

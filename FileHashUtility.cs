@@ -17,9 +17,9 @@ namespace DMSDatasetRetriever
         /// </summary>
         private DatasetRetrieverOptions Options { get; }
 
-        private string ComputeChecksumMD5(FileSystemInfo dataFile)
+        private string ComputeChecksumMD5(FileSystemInfo dataFile, out string base64MD5)
         {
-            var md5 = HashUtilities.ComputeFileHashMD5(dataFile.FullName);
+            var md5 = HashUtilities.ComputeFileHashMD5(dataFile.FullName, out base64MD5);
             return md5;
         }
 
@@ -36,7 +36,7 @@ namespace DMSDatasetRetriever
         /// <param name="progressAtStart"></param>
         /// <param name="progressAtEnd"></param>
         /// <returns></returns>
-        public bool ComputeFileChecksums(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
+        private bool ComputeFileChecksums(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
         {
 
             try
@@ -115,7 +115,9 @@ namespace DMSDatasetRetriever
                         }
 
                         OnDebugEvent("Computing MD5 hash:   " + dataFile.Name);
-                        fileChecksumInfo.MD5 = ComputeChecksumMD5(dataFile);
+                        fileChecksumInfo.MD5 = ComputeChecksumMD5(dataFile, out var base64MD5);
+                        fileChecksumInfo.MD5_Base64 = base64MD5;
+
                         totalBytesHashed += dataFile.Length;
                     }
 
