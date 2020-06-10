@@ -144,7 +144,7 @@ namespace DMSDatasetRetriever
                 OnDebugEvent("Loading existing checksum file: " + PathUtils.CompactPathString(ChecksumFilePath, 100));
 
                 var columnMap = new Dictionary<ChecksumFileColumns, int>();
-                var standardColumnNames = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
+                var columnNamesByIdentifier = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
 
                 if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.CPTAC)
                 {
@@ -153,12 +153,12 @@ namespace DMSDatasetRetriever
                 }
                 else
                 {
-                    DataTableUtils.AddColumnNamesForIdentifier(standardColumnNames, ChecksumFileColumns.Filename, "raw_file");
-                    DataTableUtils.AddColumnNamesForIdentifier(standardColumnNames, ChecksumFileColumns.Fraction, "fraction");
-                    DataTableUtils.AddColumnNamesForIdentifier(standardColumnNames, ChecksumFileColumns.TechnicalReplicate, "technical_replicate");
-                    DataTableUtils.AddColumnNamesForIdentifier(standardColumnNames, ChecksumFileColumns.Comment, "tech_rep_comment");
-                    DataTableUtils.AddColumnNamesForIdentifier(standardColumnNames, ChecksumFileColumns.MD5, "md5");
-                    DataTableUtils.AddColumnNamesForIdentifier(standardColumnNames, ChecksumFileColumns.SHA1, "sha1");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Filename, "raw_file");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Fraction, "fraction");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.TechnicalReplicate, "technical_replicate");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Comment, "tech_rep_comment");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.MD5, "md5");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.SHA1, "sha1");
                 }
 
                 using (var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
