@@ -48,6 +48,8 @@ namespace DMSDatasetRetriever
             Comment = 5
         }
 
+        #region "Properties"
+
         /// <summary>
         /// Checksum file mode
         /// </summary>
@@ -74,6 +76,8 @@ namespace DMSDatasetRetriever
         /// </summary>
         public Dictionary<string, FileChecksumInfo> DataFileChecksums { get; }
 
+        #endregion
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -87,7 +91,6 @@ namespace DMSDatasetRetriever
             DataFileChecksums = new Dictionary<string, FileChecksumInfo>(StringComparer.OrdinalIgnoreCase);
 
             ChecksumFilePath = GetChecksumFilePath();
-
         }
 
         /// <summary>

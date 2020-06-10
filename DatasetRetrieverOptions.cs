@@ -13,7 +13,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "June 9, 2020";
+        public const string PROGRAM_DATE = "June 10, 2020";
 
         #region "Enums"
 
