@@ -173,16 +173,16 @@ namespace DMSDatasetRetriever
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var lineParts = dataLine.Split('\t').ToList();
-
                         linesRead++;
 
                         if (linesRead == 1 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
                         {
                             // Parse the header line
-                            UpdateColumnMapping(standardColumnNames, columnMap, lineParts);
+                            var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
                             continue;
                         }
+
+                        var lineParts = dataLine.Split('\t').ToList();
 
                         switch (ChecksumFileMode)
                         {
@@ -273,25 +273,6 @@ namespace DMSDatasetRetriever
             }
 
             DataFileChecksums.Add(fileName, fileChecksumInfo);
-        }
-
-        private void UpdateColumnMapping(
-            Dictionary<ChecksumFileColumns, SortedSet<string>> standardColumnNames,
-            IDictionary<ChecksumFileColumns, int> columnMap,
-            IReadOnlyList<string> lineParts)
-        {
-            for (var columnIndex = 0; columnIndex < lineParts.Count; columnIndex++)
-            {
-                foreach (var standardColumn in standardColumnNames)
-                {
-                    if (!standardColumn.Value.Contains(lineParts[columnIndex]))
-                        continue;
-
-                    columnMap.Add(standardColumn.Key, columnIndex);
-                    break;
-                }
-            }
-
         }
 
         /// <summary>

@@ -84,18 +84,6 @@ namespace DMSDatasetRetriever
             InitializeDatasetInfoFileColumns();
         }
 
-        private void AddDatasetInfoFileColumn(DatasetInfoColumns datasetInfoColumn, params string[] columnNames)
-        {
-            var columnNameList = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var columnName in columnNames)
-            {
-                columnNameList.Add(columnName);
-            }
-
-            DatasetInfoColumnNames.Add(datasetInfoColumn, columnNameList);
-        }
-
         private bool CopyDatasetFiles(IDBTools dbTools, IEnumerable<DatasetInfo> datasetList, DirectoryInfo outputDirectory)
         {
             try
@@ -527,11 +515,17 @@ namespace DMSDatasetRetriever
 
         private void InitializeDatasetInfoFileColumns()
         {
-            AddDatasetInfoFileColumn(DatasetInfoColumns.DatasetName, "Dataset", "DatasetName", "Dataset Name");
+            DataTableUtils.AddColumnNamesForIdentifier(DatasetInfoColumnNames,
+                DatasetInfoColumns.DatasetName,
+                "Dataset", "DatasetName", "Dataset Name");
 
-            AddDatasetInfoFileColumn(DatasetInfoColumns.TargetName, "TargetName", "Target Name", "New Name", "DCC_File_Name");
+            DataTableUtils.AddColumnNamesForIdentifier(DatasetInfoColumnNames,
+                DatasetInfoColumns.TargetName,
+                "TargetName", "Target Name", "New Name", "DCC_File_Name");
 
-            AddDatasetInfoFileColumn(DatasetInfoColumns.TargetDirectory, "TargetDirectory", "Target Directory", "DCC_Folder_Name");
+            DataTableUtils.AddColumnNamesForIdentifier(DatasetInfoColumnNames,
+                DatasetInfoColumns.TargetDirectory,
+                "TargetDirectory", "Target Directory", "DCC_Folder_Name");
         }
 
         /// <summary>
