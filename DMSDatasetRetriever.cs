@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using PRISM;
+using PRISM.FileProcessor;
 using PRISMDatabaseUtils;
 
 namespace DMSDatasetRetriever
@@ -868,13 +869,13 @@ namespace DMSDatasetRetriever
 
         private void FileCopyUtilityOnProgressUpdate(string progressMessage, float percentComplete)
         {
-            var percentCompleteOverall = percentComplete * 0.5;
+            var percentCompleteOverall = ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(0, 50, percentComplete);
             ReportProgress(progressMessage, percentComplete, percentCompleteOverall);
         }
 
         private void FileHashUtilityOnProgressUpdate(string progressMessage, float percentComplete)
         {
-            var percentCompleteOverall = 0.5 + percentComplete * 0.5;
+            var percentCompleteOverall = ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(50, 100, percentComplete);
             ReportProgress(progressMessage, percentComplete, percentCompleteOverall);
         }
 

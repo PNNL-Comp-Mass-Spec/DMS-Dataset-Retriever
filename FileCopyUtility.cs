@@ -81,10 +81,14 @@ namespace DMSDatasetRetriever
 
         private void ComputeTotalBytesToCopy(
             Dictionary<DatasetInfo, List<DatasetFileOrDirectory>> sourceFilesByDataset,
-            FileSystemInfo outputDirectory)
+            FileSystemInfo outputDirectory,
+            out int datasetCountToCopy)
         {
             TotalBytesToCopy = 0;
             BytesCopied = 0;
+
+            datasetCountToCopy = 0;
+            long lastByteCountTotal = 0;
 
             foreach (var sourceDataset in sourceFilesByDataset)
             {
@@ -98,6 +102,12 @@ namespace DMSDatasetRetriever
                     else
                     {
                         ComputeTotalBytesAddFileIfMissing(outputDirectory, sourceItem);
+                    }
+
+                    if (TotalBytesToCopy > lastByteCountTotal)
+                    {
+                        datasetCountToCopy++;
+                        lastByteCountTotal = TotalBytesToCopy;
                     }
                 }
             }
@@ -125,8 +135,18 @@ namespace DMSDatasetRetriever
                 RegisterEvents(fileTools);
                 fileTools.SkipConsoleWriteIfNoProgressListener = true;
 
-                ComputeTotalBytesToCopy(sourceFilesByDataset, outputDirectory);
+                ComputeTotalBytesToCopy(sourceFilesByDataset, outputDirectory, out var datasetCountToCopy);
                 var lastProgressTime = DateTime.UtcNow;
+
+                Console.WriteLine();
+                if (datasetCountToCopy > 0)
+                {
+                    OnStatusEvent(string.Format(
+                        "Retrieving data for {0} datasets; {1} total",
+                        datasetCountToCopy, FileTools.BytesToHumanReadable(TotalBytesToCopy)));
+
+                    Console.WriteLine();
+                }
 
                 foreach (var sourceDataset in sourceFilesByDataset)
                 {

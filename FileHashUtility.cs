@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using PRISM;
+using PRISM.FileProcessor;
 
 namespace DMSDatasetRetriever
 {
@@ -141,6 +142,7 @@ namespace DMSDatasetRetriever
         private long ComputeTotalBytesToHash(ChecksumFileUpdater checksumFileUpdater, out int datasetCountToProcess)
         {
             long totalBytesToHash = 0;
+            datasetCountToProcess = 0;
 
             foreach (var dataFile in checksumFileUpdater.DataFiles)
             {
@@ -148,16 +150,24 @@ namespace DMSDatasetRetriever
                     continue;
 
                 var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
+                var updateRequired = false;
 
                 if (string.IsNullOrWhiteSpace(fileChecksumInfo.SHA1))
                 {
                     totalBytesToHash += dataFile.Length;
+                    updateRequired = true;
                 }
 
                 if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC &&
                     string.IsNullOrWhiteSpace(fileChecksumInfo.MD5))
                 {
                     totalBytesToHash += dataFile.Length;
+                    updateRequired = true;
+                }
+
+                if (updateRequired)
+                {
+                    datasetCountToProcess++;
                 }
             }
 
@@ -202,12 +212,24 @@ namespace DMSDatasetRetriever
                     }
                 }
 
+                if (checksumData.Count == 0)
+                    return true;
+
+                var progressChunkSize = 100 / (float)checksumData.Count;
+
+                var itemsProcessed = 0;
                 var successCount = 0;
+
                 foreach (var item in checksumData)
                 {
-                    var updateSuccess = CreateOrUpdateChecksumFile(item.Value);
+                    var progressAtStart = itemsProcessed * progressChunkSize;
+                    var progressAtEnd = (itemsProcessed + 1) * progressChunkSize;
+
+                    var updateSuccess = CreateOrUpdateChecksumFile(item.Value, progressAtStart, progressAtEnd);
                     if (updateSuccess)
                         successCount++;
+
+                    itemsProcessed++;
                 }
 
                 return (successCount == checksumData.Count);
