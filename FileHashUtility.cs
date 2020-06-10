@@ -28,7 +28,6 @@ namespace DMSDatasetRetriever
             return sha1;
         }
 
-        private long ComputeTotalBytesToHash(ChecksumFileUpdater checksumUpdater)
         /// <summary>
         /// Compute checksums for files in checksumFileUpdater.DataFiles
         /// </summary>
@@ -139,15 +138,16 @@ namespace DMSDatasetRetriever
             }
         }
 
+        private long ComputeTotalBytesToHash(ChecksumFileUpdater checksumFileUpdater, out int datasetCountToProcess)
         {
             long totalBytesToHash = 0;
 
-            foreach (var dataFile in checksumUpdater.DataFiles)
+            foreach (var dataFile in checksumFileUpdater.DataFiles)
             {
                 if (!dataFile.Exists)
                     continue;
 
-                var fileChecksumInfo = GetFileChecksumInfo(checksumUpdater, dataFile);
+                var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
 
                 if (string.IsNullOrWhiteSpace(fileChecksumInfo.SHA1))
                 {
@@ -194,11 +194,11 @@ namespace DMSDatasetRetriever
 
                     var targetDirectory = dataset.TargetDirectoryFiles.First().Directory;
 
-                    var checksumUpdater = GetChecksumUpdater(checksumData, targetDirectory);
+                    var checksumFileUpdater = GetChecksumUpdater(checksumData, targetDirectory);
 
                     foreach (var datasetFile in dataset.TargetDirectoryFiles)
                     {
-                        checksumUpdater.AddDataFile(datasetFile);
+                        checksumFileUpdater.AddDataFile(datasetFile);
                     }
                 }
 
@@ -219,12 +219,11 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private bool CreateOrUpdateChecksumFile(ChecksumFileUpdater checksumUpdater)
+        private bool CreateOrUpdateChecksumFile(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
         {
             try
             {
-                checksumUpdater.LoadExistingChecksumFile();
-
+                checksumFileUpdater.LoadExistingChecksumFile();
 
                 var success = ComputeFileChecksums(checksumFileUpdater, progressAtStart, progressAtEnd);
 
@@ -254,9 +253,9 @@ namespace DMSDatasetRetriever
             DirectoryInfo targetDirectory)
         {
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (checksumData.TryGetValue(targetDirectory.FullName, out var checksumUpdater))
+            if (checksumData.TryGetValue(targetDirectory.FullName, out var checksumFileUpdater))
             {
-                return checksumUpdater;
+                return checksumFileUpdater;
             }
 
             var newUpdater = new ChecksumFileUpdater(targetDirectory, Options.ChecksumFileMode);
@@ -265,15 +264,15 @@ namespace DMSDatasetRetriever
             return newUpdater;
         }
 
-        private FileChecksumInfo GetFileChecksumInfo(ChecksumFileUpdater checksumUpdater, FileSystemInfo dataFile)
+        private FileChecksumInfo GetFileChecksumInfo(ChecksumFileUpdater checksumFileUpdater, FileSystemInfo dataFile)
         {
-            if (checksumUpdater.DataFileChecksums.TryGetValue(dataFile.Name, out var fileChecksumInfo))
+            if (checksumFileUpdater.DataFileChecksums.TryGetValue(dataFile.Name, out var fileChecksumInfo))
             {
                 return fileChecksumInfo;
             }
 
             var newChecksumInfo = new FileChecksumInfo(dataFile.Name);
-            checksumUpdater.DataFileChecksums.Add(dataFile.Name, newChecksumInfo);
+            checksumFileUpdater.DataFileChecksums.Add(dataFile.Name, newChecksumInfo);
 
             return newChecksumInfo;
         }
