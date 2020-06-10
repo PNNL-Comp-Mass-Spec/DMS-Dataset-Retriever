@@ -5,7 +5,10 @@ using PRISM;
 
 namespace DMSDatasetRetriever
 {
-    class FileCopyUtility : EventNotifier
+    /// <summary>
+    /// Utility for copying dataset files to the specified directory
+    /// </summary>
+    internal class FileCopyUtility : EventNotifier
     {
         /// <summary>
         /// Retrieval options

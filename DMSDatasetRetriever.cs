@@ -7,7 +7,11 @@ using PRISMDatabaseUtils;
 
 namespace DMSDatasetRetriever
 {
-    class DMSDatasetRetriever : EventNotifier
+    /// <summary>
+    /// Find files for the specified datasets and copy them to the output directory
+    /// Create checksum files listing SHA-1 and/or MD5 hashes for each file
+    /// </summary>
+    public class DMSDatasetRetriever : EventNotifier
     {
         #region "Constants and Enums"
 

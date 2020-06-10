@@ -1,8 +1,14 @@
 ﻿
 namespace DMSDatasetRetriever
 {
-    class InstrumentClassInfo
+    /// <summary>
+    /// This class tracks instrument class information
+    /// </summary>
+    internal class InstrumentClassInfo
     {
+        /// <summary>
+        /// Raw data types
+        /// </summary>
         public enum RawDataTypes
         {
             Unknown = 0,

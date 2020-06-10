@@ -3,7 +3,10 @@ using System.IO;
 
 namespace DMSDatasetRetriever
 {
-    class DatasetFileOrDirectory
+    /// <summary>
+    /// This class tracks information on a dataset file or directory
+    /// </summary>
+    internal class DatasetFileOrDirectory
     {
         /// <summary>
         /// Dataset info

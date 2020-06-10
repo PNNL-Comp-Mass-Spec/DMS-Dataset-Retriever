@@ -6,7 +6,10 @@ using PRISM;
 
 namespace DMSDatasetRetriever
 {
-    class FileHashUtility : EventNotifier
+    /// <summary>
+    /// Utility for computing MD5 and SHA-1 checksums
+    /// </summary>
+    internal class FileHashUtility : EventNotifier
     {
         /// <summary>
         /// Retrieval options

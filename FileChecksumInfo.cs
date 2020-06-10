@@ -1,6 +1,9 @@
 ﻿namespace DMSDatasetRetriever
 {
-    class FileChecksumInfo
+    /// <summary>
+    /// This class tracks checksum file information
+    /// </summary>
+    internal class FileChecksumInfo
     {
         /// <summary>
         /// File name

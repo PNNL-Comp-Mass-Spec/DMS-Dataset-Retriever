@@ -6,7 +6,10 @@ using PRISMDatabaseUtils;
 
 namespace DMSDatasetRetriever
 {
-    class ChecksumFileUpdater : PRISM.EventNotifier
+    /// <summary>
+    /// Utility for reading/writing checksum files
+    /// </summary>
+    internal class ChecksumFileUpdater : EventNotifier
     {
         private enum ChecksumFileColumns
         {

@@ -4,7 +4,10 @@ using System.IO;
 
 namespace DMSDatasetRetriever
 {
-    class DatasetInfo
+    /// <summary>
+    /// This class tracks dataset metadata
+    /// </summary>
+    public class DatasetInfo
     {
         /// <summary>
         /// Dataset name
