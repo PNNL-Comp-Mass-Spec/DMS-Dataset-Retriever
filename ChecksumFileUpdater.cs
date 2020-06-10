@@ -110,14 +110,6 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private string GetColumnValue(IReadOnlyList<string> lineParts, int columnIndex)
-        {
-            if (columnIndex < 0 || columnIndex >= lineParts.Count)
-                return string.Empty;
-
-            return lineParts[columnIndex];
-        }
-
         /// <summary>
         /// Load an existing checksum file (if it exists)
         /// </summary>
@@ -201,8 +193,8 @@ namespace DMSDatasetRetriever
 
         private void ParseChecksumFileLineCPTAC(IReadOnlyDictionary<ChecksumFileColumns, int> columnMap, IReadOnlyList<string> lineParts)
         {
-            var sha1 = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.SHA1]);
-            var fileName = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.Filename]);
+            var sha1 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.SHA1);
+            var fileName = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename);
 
             string cleanFileName;
             if (fileName.StartsWith("*"))
@@ -226,8 +218,8 @@ namespace DMSDatasetRetriever
 
         private void ParseChecksumFileLineMoTrPAC(IReadOnlyDictionary<ChecksumFileColumns, int> columnMap, IReadOnlyList<string> lineParts)
         {
-            var fileName = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.SHA1]);
-            var fraction = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.Fraction]);
+            var fileName = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename);
+            var fraction = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Fraction);
             if (!int.TryParse(fraction, out var fractionNumber))
             {
                 fractionNumber = 0;
@@ -236,11 +228,10 @@ namespace DMSDatasetRetriever
                     fileName, DataFileDirectory.Name));
             }
 
-            var technicalReplicateFlag = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.TechnicalReplicate]);
-            var comment = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.Comment]);
-            var md5 = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.MD5]);
-            var sha1 = GetColumnValue(lineParts, columnMap[ChecksumFileColumns.SHA1]);
-
+            var technicalReplicateFlag = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.TechnicalReplicate);
+            var comment = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Comment);
+            var md5 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.MD5);
+            var sha1 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.SHA1);
 
             var isTechnicalReplicate = technicalReplicateFlag.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
                                        technicalReplicateFlag.Equals("true", StringComparison.OrdinalIgnoreCase);

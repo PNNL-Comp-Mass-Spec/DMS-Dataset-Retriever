@@ -223,25 +223,6 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private string GetColumnValue(
-            IReadOnlyList<string> rowData,
-            IReadOnlyDictionary<DatasetInfoColumns, int> columnMap,
-            DatasetInfoColumns datasetInfoColumn,
-            string valueIfMissing)
-        {
-            if (!columnMap.TryGetValue(datasetInfoColumn, out var columnIndex) || columnIndex < 0)
-            {
-                return valueIfMissing;
-            }
-
-            if (columnIndex >= rowData.Count)
-            {
-                return valueIfMissing;
-            }
-
-            return rowData[columnIndex];
-        }
-
         private bool GetDatasetInfoFromDMS(IDBTools dbTools, IReadOnlyCollection<DatasetInfo> datasetList)
         {
             try
@@ -605,9 +586,9 @@ namespace DMSDatasetRetriever
 
                         var rowData = dataLine.Split('\t').ToList();
 
-                        var datasetName = GetColumnValue(rowData, columnMap, DatasetInfoColumns.DatasetName, string.Empty);
-                        var targetName = GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetName, string.Empty);
-                        var targetDirectory = GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetDirectory, string.Empty);
+                        var datasetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.DatasetName, string.Empty);
+                        var targetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetName, string.Empty);
+                        var targetDirectory = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetDirectory, string.Empty);
 
                         if (string.IsNullOrWhiteSpace(datasetName))
                         {
