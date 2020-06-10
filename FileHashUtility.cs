@@ -29,6 +29,116 @@ namespace DMSDatasetRetriever
         }
 
         private long ComputeTotalBytesToHash(ChecksumFileUpdater checksumUpdater)
+        /// <summary>
+        /// Compute checksums for files in checksumFileUpdater.DataFiles
+        /// </summary>
+        /// <param name="checksumFileUpdater"></param>
+        /// <param name="progressAtStart"></param>
+        /// <param name="progressAtEnd"></param>
+        /// <returns></returns>
+        public bool ComputeFileChecksums(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
+        {
+
+            try
+            {
+                var totalBytesToHash = ComputeTotalBytesToHash(checksumFileUpdater, out var datasetCountToProcess);
+
+                long totalBytesHashed = 0;
+                var lastProgressTime = DateTime.UtcNow;
+
+                if (datasetCountToProcess == 0)
+                {
+                    Console.WriteLine();
+                    OnStatusEvent(string.Format(
+                        "Checksum values are already up to date for all {0} datasets in {1}",
+                        checksumFileUpdater.DataFiles.Count,
+                        Path.GetFileName(checksumFileUpdater.ChecksumFilePath)));
+
+                    return true;
+                }
+
+                Console.WriteLine();
+                var action = Options.PreviewMode ? "Preview compute" : "Computing";
+
+                OnStatusEvent(string.Format(
+                    "{0} checksum values for {1} datasets in {2}; {3} to process ",
+                    action,
+                    datasetCountToProcess,
+                    Path.GetFileName(checksumFileUpdater.ChecksumFilePath),
+                    FileTools.BytesToHumanReadable(totalBytesToHash)));
+
+                foreach (var dataFile in checksumFileUpdater.DataFiles)
+                {
+                    var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
+
+                    var computeSHA1 = string.IsNullOrWhiteSpace(fileChecksumInfo.SHA1);
+
+                    var computeMD5 = string.IsNullOrWhiteSpace(fileChecksumInfo.MD5) &&
+                                     Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC;
+
+                    if (Options.PreviewMode)
+                    {
+                        if (computeMD5 && computeSHA1)
+                        {
+                            OnDebugEvent("Compute SHA-1 and MD5 hashes: " + dataFile.Name);
+                        }
+                        else if (computeMD5)
+                        {
+                            OnDebugEvent("Compute MD5 hash: " + dataFile.Name);
+                        }
+                        else if (computeSHA1)
+                        {
+                            OnDebugEvent("Compute SHA-1 hash: " + dataFile.Name);
+                        }
+                        continue;
+                    }
+
+                    if (computeSHA1)
+                    {
+                        if (!dataFile.Exists)
+                        {
+                            OnWarningEvent("File not found; cannot compute the SHA-1 hash for " + dataFile.FullName);
+                            continue;
+                        }
+
+                        OnDebugEvent("Computing SHA-1 hash: " + dataFile.Name);
+                        fileChecksumInfo.SHA1 = ComputeChecksumSHA1(dataFile);
+                        totalBytesHashed += dataFile.Length;
+                    }
+
+                    if (computeMD5)
+                    {
+                        if (!dataFile.Exists)
+                        {
+                            OnWarningEvent("File not found; cannot compute the MD5 hash for " + dataFile.FullName);
+                            continue;
+                        }
+
+                        OnDebugEvent("Computing MD5 hash:   " + dataFile.Name);
+                        fileChecksumInfo.MD5 = ComputeChecksumMD5(dataFile);
+                        totalBytesHashed += dataFile.Length;
+                    }
+
+                    if (totalBytesToHash <= 0 || Options.PreviewMode || DateTime.UtcNow.Subtract(lastProgressTime).TotalSeconds < 15)
+                        continue;
+
+                    var checksumPercentComplete = totalBytesHashed / (float)totalBytesToHash * 100;
+
+                    var percentComplete = ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(progressAtStart, progressAtEnd, checksumPercentComplete);
+
+                    OnProgressUpdate("Computing checksums", percentComplete);
+                    lastProgressTime = DateTime.UtcNow;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in ComputeFileChecksums", ex);
+                return false;
+            }
+        }
+
         {
             long totalBytesToHash = 0;
 
@@ -115,62 +225,10 @@ namespace DMSDatasetRetriever
             {
                 checksumUpdater.LoadExistingChecksumFile();
 
-                var totalBytesToHash = ComputeTotalBytesToHash(checksumUpdater);
 
-                long totalBytesHashed = 0;
-                var lastProgressTime = DateTime.UtcNow;
+                var success = ComputeFileChecksums(checksumFileUpdater, progressAtStart, progressAtEnd);
 
-                foreach (var dataFile in checksumUpdater.DataFiles)
                 {
-                    var fileChecksumInfo = GetFileChecksumInfo(checksumUpdater, dataFile);
-
-                    if (string.IsNullOrWhiteSpace(fileChecksumInfo.SHA1))
-                    {
-                        if (Options.PreviewMode)
-                        {
-                            OnDebugEvent("Compute SHA-1 sum of " + dataFile.Name);
-                        }
-                        else
-                        {
-                            if (!dataFile.Exists)
-                            {
-                                OnWarningEvent("File not found; cannot compute the SHA-1 hash of " + dataFile.FullName);
-                                continue;
-                            }
-
-                            fileChecksumInfo.SHA1 = ComputeChecksumSHA1(dataFile);
-                            totalBytesHashed += dataFile.Length;
-                        }
-
-                    }
-
-                    if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC &&
-                        string.IsNullOrWhiteSpace(fileChecksumInfo.MD5))
-                    {
-                        if (Options.PreviewMode)
-                        {
-                            OnDebugEvent("Compute MD5 sum of " + dataFile.Name);
-                        }
-                        else
-                        {
-                            if (!dataFile.Exists)
-                            {
-                                OnWarningEvent("File not found; cannot compute the MD5 hash of " + dataFile.FullName);
-                                continue;
-                            }
-
-                            fileChecksumInfo.MD5 = ComputeChecksumMD5(dataFile);
-                            totalBytesHashed += dataFile.Length;
-                        }
-
-                    }
-
-                    if (totalBytesToHash <= 0 || Options.PreviewMode || DateTime.UtcNow.Subtract(lastProgressTime).TotalSeconds < 3)
-                        continue;
-
-                    var percentComplete = totalBytesHashed / (float)totalBytesToHash * 100;
-                    OnProgressUpdate("Computing checksums", percentComplete);
-                    lastProgressTime = DateTime.UtcNow;
                 }
 
                 return true;
