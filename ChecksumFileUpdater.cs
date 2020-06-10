@@ -262,6 +262,12 @@ namespace DMSDatasetRetriever
                 SHA1 = sha1
             };
 
+            if (technicalReplicateFlag.Equals("no") && comment.Equals("no"))
+            {
+                // Fix typo in _Manifest.txt files
+                fileChecksumInfo.Comment = string.Empty;
+            }
+
             DataFileChecksums.Add(fileName, fileChecksumInfo);
         }
 
