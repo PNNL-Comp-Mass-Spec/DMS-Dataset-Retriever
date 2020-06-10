@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using PRISM;
 using PRISMDatabaseUtils;
 
 namespace DMSDatasetRetriever
@@ -53,6 +54,12 @@ namespace DMSDatasetRetriever
         public DatasetRetrieverOptions.ChecksumFileType ChecksumFileMode { get; }
 
         /// <summary>
+        /// Checksum file path
+        /// </summary>
+        /// <remarks>auto determined using ChecksumFileMode and DataFileDirectory</remarks>
+        public string ChecksumFilePath { get; }
+
+        /// <summary>
         /// Data file directory
         /// </summary>
         public DirectoryInfo DataFileDirectory { get; }
@@ -78,6 +85,9 @@ namespace DMSDatasetRetriever
             DataFileDirectory = dataFileDirectory;
             DataFiles = new List<FileInfo>();
             DataFileChecksums = new Dictionary<string, FileChecksumInfo>(StringComparer.OrdinalIgnoreCase);
+
+            ChecksumFilePath = GetChecksumFilePath();
+
         }
 
         /// <summary>
@@ -117,8 +127,7 @@ namespace DMSDatasetRetriever
         {
             try
             {
-                var checksumFilePath = GetChecksumFilePath();
-                if (string.IsNullOrWhiteSpace(checksumFilePath))
+                if (string.IsNullOrWhiteSpace(ChecksumFilePath))
                 {
                     OnWarningEvent(string.Format(
                         "Checksum file name could not be determined for {0}, ChecksumFileMode {1}",
@@ -126,7 +135,7 @@ namespace DMSDatasetRetriever
                     return;
                 }
 
-                var checksumFile = new FileInfo(checksumFilePath);
+                var checksumFile = new FileInfo(ChecksumFilePath);
                 if (!checksumFile.Exists)
                 {
                     return;
@@ -273,6 +282,102 @@ namespace DMSDatasetRetriever
                 }
             }
 
+        }
+
+        /// <summary>
+        /// Create or update the checksum file
+        /// </summary>
+        /// <returns></returns>
+        public bool WriteChecksumFile()
+        {
+            try
+            {
+                var checksumFilePath = GetChecksumFilePath();
+                if (string.IsNullOrWhiteSpace(checksumFilePath))
+                {
+                    OnWarningEvent(string.Format(
+                        "Checksum file name could not be determined for {0}, ChecksumFileMode {1}",
+                        DataFileDirectory.FullName, ChecksumFileMode));
+                    return false;
+                }
+
+                var checksumFile = new FileInfo(checksumFilePath);
+                if (checksumFile.Exists)
+                {
+                    OnDebugEvent("Updating existing checksum file: " + PathUtils.CompactPathString(checksumFilePath, 100));
+                }
+                else
+                {
+                    OnDebugEvent("Creating new checksum file: " + PathUtils.CompactPathString(checksumFilePath, 100));
+                }
+
+                using (var writer = new StreamWriter(new FileStream(checksumFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    WriteHeaderLine(writer);
+
+                    foreach (var dataFile in DataFileChecksums)
+                    {
+                        WriteChecksumLine(writer, dataFile);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in WriteChecksumFile", ex);
+                return false;
+            }
+        }
+
+        private void WriteHeaderLine(TextWriter writer)
+        {
+            switch (ChecksumFileMode)
+            {
+                case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
+                    var columnNames = new List<string>
+                    {
+                        "raw_file",
+                        "fraction",
+                        "technical_replicate",
+                        "tech_rep_comment",
+                        "md5",
+                        "sha1"
+                    };
+
+                    writer.WriteLine(string.Join("\t", columnNames));
+                    return;
+
+                case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
+                    // CPTAC checksum files do not have a header line
+                    return;
+            }
+        }
+
+        private void WriteChecksumLine(TextWriter writer, KeyValuePair<string, FileChecksumInfo> dataFile)
+        {
+            var dataFileInfo = dataFile.Value;
+
+            switch (ChecksumFileMode)
+            {
+                case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
+                    var dataValues = new List<string>
+                    {
+                        dataFileInfo.FileName,
+                        dataFileInfo.Fraction.ToString(),
+                        dataFileInfo.IsTechnicalReplicate ? "yes" : "no",
+                        dataFileInfo.Comment,
+                        dataFileInfo.MD5,
+                        dataFileInfo.SHA1
+                    };
+
+                    writer.WriteLine(string.Join("\t", dataValues));
+                    return;
+
+                case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
+                    writer.WriteLine("{0}\t*{1}", dataFileInfo.SHA1, dataFileInfo.FileName);
+                    return;
+            }
         }
     }
 }

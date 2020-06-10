@@ -249,10 +249,12 @@ namespace DMSDatasetRetriever
 
                 var success = ComputeFileChecksums(checksumFileUpdater, progressAtStart, progressAtEnd);
 
+                if (success && !Options.PreviewMode)
                 {
+                    checksumFileUpdater.WriteChecksumFile();
                 }
 
-                return true;
+                return success;
             }
             catch (Exception ex)
             {
