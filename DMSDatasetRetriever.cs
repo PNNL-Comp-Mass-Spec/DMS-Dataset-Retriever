@@ -726,11 +726,11 @@ namespace DMSDatasetRetriever
 
                     if (Options.PreviewMode)
                     {
-                        Console.WriteLine("Preview create directory: " + outputDirectory.FullName);
+                        OnStatusEvent("Preview create directory: " + outputDirectory.FullName);
                     }
                     else
                     {
-                        Console.WriteLine("Creating the output directory: " + outputDirectory.FullName);
+                        OnStatusEvent("Creating the output directory: " + outputDirectory.FullName);
                         outputDirectory.Create();
                     }
                 }

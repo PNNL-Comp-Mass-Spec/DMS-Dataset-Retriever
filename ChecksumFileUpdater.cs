@@ -141,7 +141,7 @@ namespace DMSDatasetRetriever
                     return;
                 }
 
-                OnDebugEvent("Loading existing checksum file: " + checksumFilePath);
+                OnDebugEvent("Loading existing checksum file: " + PathUtils.CompactPathString(ChecksumFilePath, 100));
 
                 var columnMap = new Dictionary<ChecksumFileColumns, int>();
                 var standardColumnNames = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
@@ -186,6 +186,7 @@ namespace DMSDatasetRetriever
                             case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
                                 ParseChecksumFileLineMoTrPAC(columnMap, lineParts);
                                 break;
+
                             case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
                                 ParseChecksumFileLineCPTAC(columnMap, lineParts);
                                 break;

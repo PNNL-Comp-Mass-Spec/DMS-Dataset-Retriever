@@ -270,7 +270,7 @@ namespace DMSDatasetRetriever
                     if (sourceFile.Length == targetFile.Length &&
                         FileTools.NearlyEqualFileTimes(sourceFile.LastWriteTime, targetFile.LastWriteTime))
                     {
-                        OnDebugEvent("Skipping existing, identical file: " + FileTools.CompactPathString(targetFile.FullName, 80));
+                        OnDebugEvent("Skipping existing, identical file: " + FileTools.CompactPathString(targetFile.FullName, 100));
                         datasetInfo.TargetDirectoryFiles.Add(targetFile);
                         return;
                     }
@@ -278,7 +278,7 @@ namespace DMSDatasetRetriever
 
                 if (Options.PreviewMode)
                 {
-                    Console.WriteLine("Copy {0} to\n  {1}", sourceFile.FullName, targetFile.FullName);
+                    OnStatusEvent(string.Format("Preview copy {0} to\n  {1}", sourceFile.FullName, targetFile.FullName));
                 }
                 else
                 {

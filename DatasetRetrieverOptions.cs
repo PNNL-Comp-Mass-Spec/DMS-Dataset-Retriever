@@ -13,7 +13,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "June 8, 2020";
+        public const string PROGRAM_DATE = "June 9, 2020";
 
         #region "Enums"
 
@@ -161,7 +161,6 @@ namespace DMSDatasetRetriever
             {
                 Console.WriteLine(" {0,-25} {1}", "Output directory:", OutputDirectoryPath);
             }
-
 
             Console.WriteLine(" {0,-25} {1}", "Checksum file mode:", ChecksumFileModeName);
 
