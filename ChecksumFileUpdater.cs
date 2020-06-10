@@ -129,8 +129,11 @@ namespace DMSDatasetRetriever
             {
                 if (string.IsNullOrWhiteSpace(ChecksumFilePath))
                 {
+                    if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
+                        return;
+
                     OnWarningEvent(string.Format(
-                        "Checksum file name could not be determined for {0}, ChecksumFileMode {1}",
+                        "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
                         DataFileDirectory.FullName, ChecksumFileMode));
                     return;
                 }
@@ -302,8 +305,16 @@ namespace DMSDatasetRetriever
                 var checksumFilePath = GetChecksumFilePath();
                 if (string.IsNullOrWhiteSpace(checksumFilePath))
                 {
+                    if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
+                    {
+                        OnWarningEvent(string.Format(
+                            "WriteChecksumFile called when the ChecksumFileMode is {0}; nothing to do",
+                            ChecksumFileMode));
+                        return true;
+                    }
+
                     OnWarningEvent(string.Format(
-                        "Checksum file name could not be determined for {0}, ChecksumFileMode {1}",
+                        "Checksum file name could not be determined for {0} in WriteChecksumFile; ChecksumFileMode is {1}",
                         DataFileDirectory.FullName, ChecksumFileMode));
                     return false;
                 }

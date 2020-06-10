@@ -181,6 +181,11 @@ namespace DMSDatasetRetriever
         /// <returns></returns>
         public bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList)
         {
+            if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
+            {
+                OnWarningEvent("FileHashUtility.CreateChecksumFiles called when Options.ChecksumFileMode is ChecksumFileType.None; nothing to do");
+                return true;
+            }
 
             try
             {
