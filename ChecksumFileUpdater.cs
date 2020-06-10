@@ -73,6 +73,7 @@ namespace DMSDatasetRetriever
 
         /// <summary>
         /// Information on each file, including MD5 and SHA-1 checksums, plus the file size
+        /// Keys are the file name, Values are the checksum details
         /// </summary>
         public Dictionary<string, FileChecksumInfo> DataFileChecksums { get; }
 
@@ -125,32 +126,25 @@ namespace DMSDatasetRetriever
 
         private string GetExpectedHeaderLine(IReadOnlyDictionary<ChecksumFileColumns, SortedSet<string>> columnNamesByIdentifier)
         {
-            var standardColumns = new List<ChecksumFileColumns>();
+            var columnIdentifierList = new List<ChecksumFileColumns>();
 
             if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.CPTAC)
             {
-                standardColumns.Add(ChecksumFileColumns.SHA1);
-                standardColumns.Add(ChecksumFileColumns.Filename);
+                columnIdentifierList.Add(ChecksumFileColumns.SHA1);
+                columnIdentifierList.Add(ChecksumFileColumns.Filename);
             }
 
             if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
             {
-                standardColumns.Add(ChecksumFileColumns.Filename);
-                standardColumns.Add(ChecksumFileColumns.Fraction);
-                standardColumns.Add(ChecksumFileColumns.TechnicalReplicate);
-                standardColumns.Add(ChecksumFileColumns.Comment);
-                standardColumns.Add(ChecksumFileColumns.MD5);
-                standardColumns.Add(ChecksumFileColumns.SHA1);
+                columnIdentifierList.Add(ChecksumFileColumns.Filename);
+                columnIdentifierList.Add(ChecksumFileColumns.Fraction);
+                columnIdentifierList.Add(ChecksumFileColumns.TechnicalReplicate);
+                columnIdentifierList.Add(ChecksumFileColumns.Comment);
+                columnIdentifierList.Add(ChecksumFileColumns.MD5);
+                columnIdentifierList.Add(ChecksumFileColumns.SHA1);
             }
 
-            var standardColumnNames = new List<string>();
-
-            foreach (var column in standardColumns)
-            {
-                standardColumnNames.Add(columnNamesByIdentifier[column].First());
-            }
-
-            return string.Join("   ", standardColumnNames);;
+            return DataTableUtils.GetExpectedHeaderLine(columnNamesByIdentifier, columnIdentifierList, "   ");
         }
 
         /// <summary>
@@ -215,8 +209,8 @@ namespace DMSDatasetRetriever
                             if (!validHeaders)
                             {
                                 OnWarningEvent("The checksum file header line does not contain the expected columns: " + dataLine);
-                                var expectedHeaders = GetExpectedHeaderLine(columnNamesByIdentifier);
-                                OnDebugEvent("Expected headers are: " + expectedHeaders);
+                                var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
+                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
                             }
 
                             continue;

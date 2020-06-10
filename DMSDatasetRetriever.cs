@@ -578,6 +578,8 @@ namespace DMSDatasetRetriever
                             if (columnMap[DatasetInfoColumns.DatasetName] < 0)
                             {
                                 ReportWarning("Dataset info file is missing the Dataset name column; unable to continue");
+                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames);
+                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
                                 return false;
                             }
 
