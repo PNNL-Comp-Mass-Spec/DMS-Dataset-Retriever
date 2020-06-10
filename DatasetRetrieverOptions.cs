@@ -106,12 +106,25 @@ namespace DMSDatasetRetriever
             HelpText = "DMS database connection string")]
         public string DMSConnectionString { get; set; } = "Server=gigasax;Database=DMS5;Trusted_Connection=yes";
 
+        [Option("ParentDirectoryDepth", "ParentDepth", HelpShowsDefault = false,
+            HelpText = "When creating the batch file with upload commands, " +
+                       "look for additional text files in directories below the parent directory (if ParentDirectoryDepth=1) " +
+                       "or the parent of the parent directory (if ParentDirectoryDepth=2)")]
+        public int ParentDirectoryDepth { get; set; } = 2;
+
         /// <summary>
         /// When true, preview the files that would be retrieved
         /// </summary>
         [Option("Preview", HelpShowsDefault = false,
             HelpText = "Preview the files that would be retrieved")]
         public bool PreviewMode { get; set; }
+
+        [Option("RemoteUploadBaseURL", "RemoteUploadURL", "RemoteURL", HelpShowsDefault = false,
+            HelpText = "Remote upload base URL to use when creating the batch file with upload commands (MoTrPAC only); " +
+                       "defaults to the MoTrPAC google cloud bucket. " +
+                       "Local data files must be organized in a hierarchy that matches the directory names in this URL")]
+        // ReSharper disable once StringLiteralTypo
+        public string RemoteUploadBaseURL { get; set; } = "gs://motrpac-portal-transfer-pnnl/PASS1B-06/T70/";
 
         /// <summary>
         /// When true, show more status messages
@@ -163,6 +176,14 @@ namespace DMSDatasetRetriever
             }
 
             Console.WriteLine(" {0,-25} {1}", "Checksum file mode:", ChecksumFileModeName);
+
+            if (ChecksumFileMode == ChecksumFileType.MoTrPAC)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Upload batch file options:");
+                Console.WriteLine(" {0,-25} {1}", "Parent directory depth:", ParentDirectoryDepth);
+                Console.WriteLine(" {0,-25} {1}", "Remote Upload Base URL:", RemoteUploadBaseURL);
+            }
 
             Console.WriteLine();
 
