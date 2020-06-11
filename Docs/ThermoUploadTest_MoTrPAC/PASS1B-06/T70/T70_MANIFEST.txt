@@ -1,0 +1,4 @@
+raw_file	fraction	technical_replicate	tech_rep_comment	md5	sha1
+Angiotensin_AllScans_1.raw	0	no		193977cbe73b203d666e96f5dcda58b7	fb88df563b57ff5f6c1877b6a87925cab1e8f444
+Angiotensin_AllScans.raw	0	no		6a324b6b952c0fbe6e832df36f93b47b	037b82b5cc55233495d43054b3de5f131236546e
+QC_shew_19_01_R06_15May19.raw	0	no		88a9fbb3bf08ab66bcfdf3b888245d2e	c2d61f7574f016361783c6351a9ff7ef6e3e5648

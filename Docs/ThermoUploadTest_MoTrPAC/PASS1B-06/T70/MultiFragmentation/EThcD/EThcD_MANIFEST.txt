@@ -1,0 +1,2 @@
+raw_file	fraction	technical_replicate	tech_rep_comment	md5	sha1
+Angiotensin_EThcD-30_325.raw	0	no		76337dfc79f6b691fb33c1e47d6293c2	d186a5ca137ad06a327bc14d99ba612703392efe
