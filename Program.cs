@@ -62,7 +62,6 @@ namespace DMSDatasetRetriever
                 }
 
                 options.OutputSetOptions();
-
             }
             catch (Exception e)
             {

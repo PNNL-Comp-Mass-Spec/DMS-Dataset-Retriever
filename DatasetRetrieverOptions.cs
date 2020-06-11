@@ -106,6 +106,9 @@ namespace DMSDatasetRetriever
             HelpText = "DMS database connection string")]
         public string DMSConnectionString { get; set; } = "Server=gigasax;Database=DMS5;Trusted_Connection=yes";
 
+        /// <summary>
+        /// Number of parent directories to traverse up when finding additional text files to upload
+        /// </summary>
         [Option("ParentDirectoryDepth", "ParentDepth", HelpShowsDefault = false,
             HelpText = "When creating the batch file with upload commands, " +
                        "look for additional text files in directories below the parent directory (if ParentDirectoryDepth=1) " +
@@ -126,6 +129,9 @@ namespace DMSDatasetRetriever
         // ReSharper disable once StringLiteralTypo
         public string RemoteUploadBaseURL { get; set; } = "gs://motrpac-portal-transfer-pnnl/PASS1B-06/T70/";
 
+        /// <summary>
+        /// Remote upload batch file path (or directory for the batch file)
+        /// </summary>
         [Option("RemoteUploadBatchFilePath", "RemoteUploadBatchFile", "BatchFilePath", HelpShowsDefault = false,
             HelpText = "Path to the directory in which to create the upload batch file " +
                        "(default name UploadFiles_yyyy-MM-dd.bat); alternatively, the name (or full path) " +

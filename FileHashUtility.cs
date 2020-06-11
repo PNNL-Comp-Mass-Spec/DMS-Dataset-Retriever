@@ -516,7 +516,7 @@ namespace DMSDatasetRetriever
                 if (fullFilePath.Length < 3)
                     return fullFilePath;
 
-                if (fullFilePath.Substring(1,2).Equals(@":\"))
+                if (fullFilePath.Substring(1, 2).Equals(@":\"))
                     return fullFilePath.Substring(3).Replace('\\', '/');
 
                 var slashIndex = fullFilePath.IndexOf('\\', 3);

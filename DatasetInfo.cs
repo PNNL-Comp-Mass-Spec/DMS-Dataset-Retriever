@@ -9,6 +9,8 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DatasetInfo
     {
+        #region "Properties"
+
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -94,6 +96,8 @@ namespace DMSDatasetRetriever
         /// Dataset file size, in bytes
         /// </summary>
         public double DatasetFileSizeBytes { get; set; }
+
+        #endregion
 
         /// <summary>
         /// Constructor

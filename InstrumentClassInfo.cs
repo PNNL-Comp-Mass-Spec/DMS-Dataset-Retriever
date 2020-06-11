@@ -6,6 +6,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class InstrumentClassInfo
     {
+
         /// <summary>
         /// Raw data types
         /// </summary>
@@ -20,6 +21,8 @@ namespace DMSDatasetRetriever
             DotRawFolder = 6,
             DataFolder = 10
         }
+
+        #region "Properties"
 
         /// <summary>
         /// Instrument class name
@@ -40,6 +43,8 @@ namespace DMSDatasetRetriever
         /// Instrument class comment
         /// </summary>
         public string Comment { get; set; }
+
+        #endregion
 
         /// <summary>
         /// Constructor
