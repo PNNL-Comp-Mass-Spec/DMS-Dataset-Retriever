@@ -167,12 +167,20 @@ namespace DMSDatasetRetriever
                 Console.WriteLine();
                 var action = Options.PreviewMode ? "Preview compute" : "Computing";
 
+                // Only append the number of bytes to process if totalBytesToHash is non-zero
+                var bytesToProcess = totalBytesToHash > 0 ?
+                                         string.Format("; {0} to process", FileTools.BytesToHumanReadable(totalBytesToHash)) :
+                                         string.Empty;
+
+                // Example messages:
+                // Preview compute checksum values for 1 dataset in CheckSumFileName
+                // Computing checksum values for 3 datasets in CheckSumFileName; 12.3 GB to process
                 OnStatusEvent(string.Format(
-                    "{0} checksum values for {1} datasets in {2}; {3} to process ",
+                    "{0} checksum values for {1} in {2}{3}",
                     action,
-                    datasetCountToProcess,
+                    DMSDatasetRetriever.GetCountWithUnits(datasetCountToProcess, "dataset", "datasets"),
                     Path.GetFileName(checksumFileUpdater.ChecksumFilePath),
-                    FileTools.BytesToHumanReadable(totalBytesToHash)));
+                    bytesToProcess));
 
                 foreach (var dataFile in checksumFileUpdater.DataFiles)
                 {
@@ -398,6 +406,10 @@ namespace DMSDatasetRetriever
                 // Nothing to do
                 return;
             }
+
+            if (Options.VerboseMode)
+            {
+                Console.WriteLine();
             }
 
             try
@@ -408,30 +420,68 @@ namespace DMSDatasetRetriever
 
                 if (string.IsNullOrWhiteSpace(Options.RemoteUploadBatchFilePath))
                 {
+                    if (Options.VerboseMode)
+                    {
+                        OnStatusEvent("Creating default-named batch file in the OutputDirectoryPath: " + Options.OutputDirectoryPath);
+                    }
                     uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
                 }
                 else if (Path.IsPathRooted(Options.RemoteUploadBatchFilePath))
                 {
+                    if (Options.VerboseMode)
+                    {
+                        OnStatusEvent("RemoteUploadBatchFilePath is rooted; treating as an absolute path");
+                    }
+
                     if (Options.RemoteUploadBatchFilePath.Trim().EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+                    {
                         uploadBatchFilePath = Options.RemoteUploadBatchFilePath;
+                    }
                     else
+                    {
                         uploadBatchFilePath = Path.Combine(Options.RemoteUploadBatchFilePath, batchFileName);
+                    }
                 }
                 else
                 {
                     if (Options.RemoteUploadBatchFilePath.Trim().EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (Options.VerboseMode)
+                        {
+                            OnStatusEvent(string.Format(
+                                "RemoteUploadBatchFilePath is not rooted; appending file {0} to {1}",
+                                Options.RemoteUploadBatchFilePath, Options.OutputDirectoryPath));
+                        }
                         uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, Options.RemoteUploadBatchFilePath);
+                    }
                     else
-                        uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
+                    {
+                        var targetDirectoryPath = Path.Combine(Options.OutputDirectoryPath, Options.RemoteUploadBatchFilePath);
+
+                        if (Options.VerboseMode)
+                        {
+                            OnStatusEvent(string.Format(
+                                "RemoteUploadBatchFilePath is not rooted; appending file {0} to {1}",
+                                batchFileName, targetDirectoryPath));
+                        }
+                        uploadBatchFilePath = Path.Combine(targetDirectoryPath, batchFileName);
+                    }
                 }
+
+                Console.WriteLine();
 
                 if (Options.PreviewMode)
                 {
                     OnStatusEvent("Would create " + uploadBatchFilePath);
+                    if (!Path.IsPathRooted(uploadBatchFilePath))
+                    {
+                        var batchFileInfo = new FileInfo(uploadBatchFilePath);
+                        OnDebugEvent("Full path: " + PathUtils.CompactPathString(batchFileInfo.FullName, 100));
+                    }
+
                     return;
                 }
 
-                Console.WriteLine();
                 OnStatusEvent("Creating " + uploadBatchFilePath);
 
                 // List of files added to the batch file
@@ -489,7 +539,11 @@ namespace DMSDatasetRetriever
                 }
 
                 Console.WriteLine();
-                OnStatusEvent(string.Format("{0} file upload commands written to the batch file", processedFiles.Count));
+
+                // Example: 12 file upload commands written to the batch file
+                OnStatusEvent(string.Format(
+                    "{0} written to the batch file",
+                    DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands")));
                 Console.WriteLine();
 
             }

@@ -216,6 +216,18 @@ namespace DMSDatasetRetriever
             }
         }
 
+        /// <summary>
+        /// Create a string showing the item count followed by the units, which will differ depending on if the count is 1 or otherwise
+        /// </summary>
+        /// <param name="itemCount"></param>
+        /// <param name="unitsIfSingle"></param>
+        /// <param name="unitsIfMultiOrZero"></param>
+        /// <returns></returns>
+        public static string GetCountWithUnits(int itemCount, string unitsIfSingle, string unitsIfMultiOrZero)
+        {
+            return string.Format("{0} {1}", itemCount, itemCount == 1 ? unitsIfSingle : unitsIfMultiOrZero);
+        }
+
         private bool GetDatasetInfoFromDMS(IDBTools dbTools, IReadOnlyCollection<DatasetInfo> datasetList)
         {
             try
@@ -571,12 +583,15 @@ namespace DMSDatasetRetriever
                             var headerLineParsed = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, DatasetInfoColumnNames);
                             if (!headerLineParsed)
                             {
+                                ReportWarning("No valid column names were found in the header line of the dataset info file; unable to continue");
+                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames);
+                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
                                 return false;
                             }
 
                             if (columnMap[DatasetInfoColumns.DatasetName] < 0)
                             {
-                                ReportWarning("Dataset info file is missing the Dataset name column; unable to continue");
+                                ReportWarning("Dataset info file is missing the Dataset name column on the header line; unable to continue");
                                 var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames);
                                 OnDebugEvent("Supported headers are: " + defaultHeaderNames);
                                 return false;
@@ -725,11 +740,11 @@ namespace DMSDatasetRetriever
 
                     if (Options.PreviewMode)
                     {
-                        OnStatusEvent("Preview create directory: " + outputDirectory.FullName);
+                        OnStatusEvent("Preview create directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
                     }
                     else
                     {
-                        OnStatusEvent("Creating the output directory: " + outputDirectory.FullName);
+                        OnStatusEvent("Creating the output directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
                         outputDirectory.Create();
                     }
                 }

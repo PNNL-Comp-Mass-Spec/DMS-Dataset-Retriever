@@ -160,9 +160,11 @@ namespace DMSDatasetRetriever
                 if (datasetCountToCopy > 0)
                 {
                     OnStatusEvent(string.Format(
-                        "Retrieving data for {0} datasets; {1} total",
-                        datasetCountToCopy, FileTools.BytesToHumanReadable(TotalBytesToCopy)));
+                        "Retrieving data for {0}; {1} total",
+                        DMSDatasetRetriever.GetCountWithUnits(datasetCountToCopy, "dataset", "datasets"),
+                        FileTools.BytesToHumanReadable(TotalBytesToCopy)));
 
+                    OnStatusEvent("Target directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
                     Console.WriteLine();
                 }
 
