@@ -61,14 +61,17 @@ namespace DMSDatasetRetriever
 
             string uploadCommand;
 
+            // Use "call cmd /c" because gsutil returns a non-zero exit code, and that will terminate a batch file
+            var gsutilCommand = "call cmd /c gsutil";
+
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (string.IsNullOrWhiteSpace(md5Base64))
             {
-                uploadCommand = string.Format("gsutil cp {0} {1}", dataFile.FullName, remoteUrl);
+                uploadCommand = string.Format("{0} cp {1} {2}", gsutilCommand, dataFile.FullName, remoteUrl);
             }
             else
             {
-                uploadCommand = string.Format("gsutil -h Content-MD5:{0} cp {1} {2}", md5Base64, dataFile.FullName, remoteUrl);
+                uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsutilCommand, md5Base64, dataFile.FullName, remoteUrl);
             }
 
             writer.WriteLine(uploadCommand);
