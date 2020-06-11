@@ -10,6 +10,13 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class FileCopyUtility : EventNotifier
     {
+        #region "Properties"
+
+        /// <summary>
+        /// Dataset link file suffix
+        /// </summary>
+        public const string LINK_FILE_SUFFIX = ".dslink";
+
         /// <summary>
         /// Retrieval options
         /// </summary>
@@ -24,6 +31,8 @@ namespace DMSDatasetRetriever
         /// Bytes that have been copied so far
         /// </summary>
         public long BytesCopied { get; private set; }
+
+        #endregion
 
         /// <summary>
         /// Constructor
@@ -265,8 +274,16 @@ namespace DMSDatasetRetriever
             {
                 var sourceFile = new FileInfo(sourceFileInfo.SourcePath);
 
+                string linkFileSuffix;
+                if (Options.UseDatasetLinkFiles)
+                    linkFileSuffix = LINK_FILE_SUFFIX;
+                else
+                    linkFileSuffix = string.Empty;
+
                 // RelativeTargetPath should have the target file name, possibly preceded by a subdirectory name
-                var targetFile = new FileInfo(Path.Combine(outputDirectory.FullName, sourceFileInfo.RelativeTargetPath));
+                var targetFilePath = Path.Combine(outputDirectory.FullName, sourceFileInfo.RelativeTargetPath + linkFileSuffix);
+
+                var targetFile = new FileInfo(targetFilePath);
 
                 if (!sourceFile.Exists)
                 {
@@ -276,6 +293,13 @@ namespace DMSDatasetRetriever
 
                 if (targetFile.Exists)
                 {
+                    if (Options.UseDatasetLinkFiles)
+                    {
+                        OnDebugEvent("Existing link file found: " + FileTools.CompactPathString(targetFile.FullName, 100));
+                        datasetInfo.TargetDirectoryFiles.Add(targetFile);
+                        return;
+                    }
+
                     if (sourceFile.Length == targetFile.Length &&
                         FileTools.NearlyEqualFileTimes(sourceFile.LastWriteTime, targetFile.LastWriteTime))
                     {
@@ -287,23 +311,39 @@ namespace DMSDatasetRetriever
 
                 if (Options.PreviewMode)
                 {
-                    OnStatusEvent(string.Format("Preview copy {0} to\n  {1}", sourceFile.FullName, targetFile.FullName));
+                    if (Options.UseDatasetLinkFiles)
+                        OnStatusEvent(string.Format("Preview create link file for {0}\n  at {1}",
+                            FileTools.CompactPathString(sourceFile.FullName, 100),
+                            FileTools.CompactPathString(targetFile.FullName, 120)));
+                    else
+                        OnStatusEvent(string.Format("Preview copy {0}\n  to {1}",
+                            FileTools.CompactPathString(sourceFile.FullName, 100),
+                            FileTools.CompactPathString(targetFile.FullName, 120)));
                 }
                 else
                 {
                     Console.WriteLine();
-
-                    var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
-                    if (copySuccess)
+                    if (Options.UseDatasetLinkFiles)
                     {
+                        CreateLinkFile(sourceFile, targetFile);
                         BytesCopied += sourceFile.Length;
                     }
                     else
                     {
-                        OnDebugEvent(string.Format(
-                            "Error copying {0} to {1}",
-                            sourceFile.FullName,
-                            PathUtils.CompactPathString(targetFile.FullName, 60)));
+                        OnStatusEvent("Retrieving " + PathUtils.CompactPathString(sourceFile.FullName, 100));
+
+                        var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
+                        if (copySuccess)
+                        {
+                            BytesCopied += sourceFile.Length;
+                        }
+                        else
+                        {
+                            OnDebugEvent(string.Format(
+                                "Error copying {0} to {1}",
+                                sourceFile.FullName,
+                                PathUtils.CompactPathString(targetFile.FullName, 100)));
+                        }
                     }
                 }
 
@@ -316,7 +356,28 @@ namespace DMSDatasetRetriever
             }
         }
 
+        private void CreateLinkFile(FileSystemInfo sourceFile, FileInfo targetFile)
         {
+            try
+            {
+                if (targetFile.Directory != null && !targetFile.Directory.Exists)
+                {
+                    OnStatusEvent("Creating missing directory: " + PathUtils.CompactPathString(targetFile.Directory.FullName, 100));
+                    targetFile.Directory.Create();
+                }
+
+                OnStatusEvent("Creating link file: " + PathUtils.CompactPathString(targetFile.FullName, 100));
+
+                using (var writer = new StreamWriter(new FileStream(targetFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    writer.WriteLine(sourceFile.FullName);
+                }
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in CreateLinkFile", ex);
+            }
         }
+
     }
 }

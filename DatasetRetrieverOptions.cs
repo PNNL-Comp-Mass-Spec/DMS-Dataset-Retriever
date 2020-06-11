@@ -13,7 +13,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "June 10, 2020";
+        public const string PROGRAM_DATE = "June 11, 2020";
 
         #region "Enums"
 
@@ -139,6 +139,20 @@ namespace DMSDatasetRetriever
         public string RemoteUploadBatchFilePath { get; set; } = string.Empty;
 
         /// <summary>
+        /// /When true, use dataset link files
+        /// </summary>
+        [Option("UseDatasetLinkFiles", "UseLinkFiles", "CreateLinks", "MakeLinks", HelpShowsDefault = false,
+            HelpText = "When true, for each remote dataset file, " +
+                       "create a local text file that contains the remote file path. " +
+                       "This saves time and disk space by not copying the file locally, " +
+                       "but checksum speeds will be slower (due to reading data over the network), " +
+                       "and when the upload occurs, the data will have to be read from the storage server, " +
+                       "then pushed to the remote server, leading to more network traffic. " +
+                       // ReSharper disable once StringLiteralTypo
+                       "Link files have extension .dslink")]
+        public bool UseDatasetLinkFiles { get; set; } = false;
+
+        /// <summary>
         /// When true, show more status messages
         /// </summary>
         [Option("VerboseMode", "Verbose", "V", HelpShowsDefault = false,
@@ -187,6 +201,8 @@ namespace DMSDatasetRetriever
                 Console.WriteLine(" {0,-25} {1}", "Output directory:", OutputDirectoryPath);
             }
 
+            Console.WriteLine(" {0,-25} {1}", "Use dataset link files:", UseDatasetLinkFiles);
+
             Console.WriteLine(" {0,-25} {1}", "Checksum file mode:", ChecksumFileModeName);
 
             if (ChecksumFileMode == ChecksumFileType.MoTrPAC)
@@ -217,6 +233,13 @@ namespace DMSDatasetRetriever
                 Console.WriteLine();
             }
 
+            if (DatasetInfoFilePath.EndsWith(".conf", StringComparison.OrdinalIgnoreCase))
+            {
+                ConsoleMsgUtils.ShowWarning(
+                    "Dataset info file ends in '.conf' -- you probably meant to use {0}",
+                    "/conf:" + DatasetInfoFilePath);
+                Console.WriteLine();
+            }
         }
 
         /// <summary>

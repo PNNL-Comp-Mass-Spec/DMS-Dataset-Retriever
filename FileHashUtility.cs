@@ -94,11 +94,18 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void AppendUploadCommand(TextWriter writer, ISet<string> processedFiles, FileSystemInfo dataFile, string md5Base64 = "")
+        private void AppendUploadCommand(TextWriter writer, ISet<string> processedFiles, FileInfo dataFile, string md5Base64 = "")
         {
             var remoteUrl = GenerateRemoteUrl(dataFile.FullName);
 
             string uploadCommand;
+
+            var sourceFileToUse = GetLocalOrRemoteFile(dataFile);
+            if (!sourceFileToUse.Exists)
+            {
+                ConsoleMsgUtils.ShowWarning(
+                    "Data file not found; adding to batch file anyway, but upload error will occur: \n  " + sourceFileToUse.FullName);
+            }
 
             // Use "call cmd /c" because gsutil returns a non-zero exit code, and that will terminate a batch file
             var gsutilCommand = "call cmd /c gsutil";
@@ -106,11 +113,11 @@ namespace DMSDatasetRetriever
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (string.IsNullOrWhiteSpace(md5Base64))
             {
-                uploadCommand = string.Format("{0} cp {1} {2}", gsutilCommand, dataFile.FullName, remoteUrl);
+                uploadCommand = string.Format("{0} cp {1} {2}", gsutilCommand, sourceFileToUse.FullName, remoteUrl);
             }
             else
             {
-                uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsutilCommand, md5Base64, dataFile.FullName, remoteUrl);
+                uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsutilCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
             }
 
             writer.WriteLine(uploadCommand);
@@ -150,8 +157,8 @@ namespace DMSDatasetRetriever
                 {
                     Console.WriteLine();
                     OnStatusEvent(string.Format(
-                        "Checksum values are already up to date for all {0} datasets in {1}",
-                        checksumFileUpdater.DataFiles.Count,
+                        "Checksum values are already up to date for {0} in {1}",
+                        DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets"),
                         Path.GetFileName(checksumFileUpdater.ChecksumFilePath)));
 
                     return true;
@@ -171,6 +178,8 @@ namespace DMSDatasetRetriever
                 {
                     var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
 
+                    var fileToHash = GetLocalOrRemoteFile(dataFile);
+
                     var computeSHA1 = string.IsNullOrWhiteSpace(fileChecksumInfo.SHA1);
 
                     var computeMD5 = string.IsNullOrWhiteSpace(fileChecksumInfo.MD5) &&
@@ -180,45 +189,45 @@ namespace DMSDatasetRetriever
                     {
                         if (computeMD5 && computeSHA1)
                         {
-                            OnDebugEvent("Compute SHA-1 and MD5 hashes: " + dataFile.Name);
+                            OnDebugEvent("Compute SHA-1 and MD5 hashes: " + fileToHash.Name);
                         }
                         else if (computeMD5)
                         {
-                            OnDebugEvent("Compute MD5 hash: " + dataFile.Name);
+                            OnDebugEvent("Compute MD5 hash: " + fileToHash.Name);
                         }
                         else if (computeSHA1)
                         {
-                            OnDebugEvent("Compute SHA-1 hash: " + dataFile.Name);
+                            OnDebugEvent("Compute SHA-1 hash: " + fileToHash.Name);
                         }
                         continue;
                     }
 
                     if (computeSHA1)
                     {
-                        if (!dataFile.Exists)
+                        if (!fileToHash.Exists)
                         {
-                            OnWarningEvent("File not found; cannot compute the SHA-1 hash for " + dataFile.FullName);
+                            OnWarningEvent("File not found; cannot compute the SHA-1 hash for " + fileToHash.FullName);
                             continue;
                         }
 
-                        OnDebugEvent("Computing SHA-1 hash: " + dataFile.Name);
-                        fileChecksumInfo.SHA1 = ComputeChecksumSHA1(dataFile);
-                        totalBytesHashed += dataFile.Length;
+                        OnDebugEvent("Computing SHA-1 hash: " + fileToHash.Name);
+                        fileChecksumInfo.SHA1 = ComputeChecksumSHA1(fileToHash);
+                        totalBytesHashed += fileToHash.Length;
                     }
 
                     if (computeMD5)
                     {
-                        if (!dataFile.Exists)
+                        if (!fileToHash.Exists)
                         {
-                            OnWarningEvent("File not found; cannot compute the MD5 hash for " + dataFile.FullName);
+                            OnWarningEvent("File not found; cannot compute the MD5 hash for " + fileToHash.FullName);
                             continue;
                         }
 
-                        OnDebugEvent("Computing MD5 hash:   " + dataFile.Name);
-                        fileChecksumInfo.MD5 = ComputeChecksumMD5(dataFile, out var base64MD5);
+                        OnDebugEvent("Computing MD5 hash:   " + fileToHash.Name);
+                        fileChecksumInfo.MD5 = ComputeChecksumMD5(fileToHash, out var base64MD5);
                         fileChecksumInfo.MD5_Base64 = base64MD5;
 
-                        totalBytesHashed += dataFile.Length;
+                        totalBytesHashed += fileToHash.Length;
                     }
 
                     if (totalBytesToHash <= 0 || Options.PreviewMode || DateTime.UtcNow.Subtract(lastProgressTime).TotalSeconds < 15)
@@ -248,8 +257,7 @@ namespace DMSDatasetRetriever
 
             foreach (var dataFile in checksumFileUpdater.DataFiles)
             {
-                if (!dataFile.Exists)
-                    continue;
+                var dataFileToHash = GetLocalOrRemoteFile(dataFile);
 
                 var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
                 var updateRequired = false;
@@ -315,7 +323,15 @@ namespace DMSDatasetRetriever
 
                     foreach (var datasetFile in dataset.TargetDirectoryFiles)
                     {
-                        checksumFileUpdater.AddDataFile(datasetFile);
+                        if (datasetFile.Name.EndsWith(FileCopyUtility.LINK_FILE_SUFFIX))
+                        {
+                            var localDatasetFile = new FileInfo(GetPathWithoutLinkFileSuffix(datasetFile));
+                            checksumFileUpdater.AddDataFile(localDatasetFile);
+                        }
+                        else
+                        {
+                            checksumFileUpdater.AddDataFile(datasetFile);
+                        }
                     }
                 }
 
@@ -380,6 +396,8 @@ namespace DMSDatasetRetriever
             {
                 // Upload batch file creation is not supported for this checksum file type
                 // Nothing to do
+                return;
+            }
             }
 
             try
@@ -555,15 +573,61 @@ namespace DMSDatasetRetriever
 
         private FileChecksumInfo GetFileChecksumInfo(ChecksumFileUpdater checksumFileUpdater, FileSystemInfo dataFile)
         {
-            if (checksumFileUpdater.DataFileChecksums.TryGetValue(dataFile.Name, out var fileChecksumInfo))
+            var datasetFileName = Path.GetFileName(GetPathWithoutLinkFileSuffix(dataFile));
+
+            if (checksumFileUpdater.DataFileChecksums.TryGetValue(datasetFileName, out var fileChecksumInfo))
             {
                 return fileChecksumInfo;
             }
 
-            var newChecksumInfo = new FileChecksumInfo(dataFile.Name);
-            checksumFileUpdater.DataFileChecksums.Add(dataFile.Name, newChecksumInfo);
+            var newChecksumInfo = new FileChecksumInfo(datasetFileName);
+            checksumFileUpdater.DataFileChecksums.Add(datasetFileName, newChecksumInfo);
 
             return newChecksumInfo;
+        }
+
+        private FileInfo GetLocalOrRemoteFile(FileInfo dataFile)
+        {
+
+            if (dataFile.Exists)
+            {
+                return dataFile;
+            }
+
+            var linkFile = new FileInfo(dataFile.FullName + FileCopyUtility.LINK_FILE_SUFFIX);
+            if (linkFile.Exists)
+            {
+                var remoteFilePath = GetRemotePathFromLinkFile(linkFile);
+
+                if (!string.IsNullOrWhiteSpace(remoteFilePath))
+                {
+                    var remoteFile = new FileInfo(remoteFilePath);
+                    return remoteFile;
+                }
+            }
+
+            return dataFile;
+        }
+
+        private string GetPathWithoutLinkFileSuffix(FileSystemInfo datasetFile)
+        {
+            if (datasetFile.FullName.EndsWith(FileCopyUtility.LINK_FILE_SUFFIX))
+                return datasetFile.FullName.Substring(0, datasetFile.FullName.Length - FileCopyUtility.LINK_FILE_SUFFIX.Length);
+
+            return datasetFile.FullName;
+        }
+
+        private string GetRemotePathFromLinkFile(FileSystemInfo linkFile)
+        {
+            using (var reader = new StreamReader(new FileStream(linkFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                if (!reader.EndOfStream)
+                {
+                    return reader.ReadLine();
+                }
+            }
+
+            return string.Empty;
         }
     }
 }
