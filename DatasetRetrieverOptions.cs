@@ -126,6 +126,12 @@ namespace DMSDatasetRetriever
         // ReSharper disable once StringLiteralTypo
         public string RemoteUploadBaseURL { get; set; } = "gs://motrpac-portal-transfer-pnnl/PASS1B-06/T70/";
 
+        [Option("RemoteUploadBatchFilePath", "RemoteUploadBatchFile", "BatchFilePath", HelpShowsDefault = false,
+            HelpText = "Path to the directory in which to create the upload batch file " +
+                       "(default name UploadFiles_yyyy-MM-dd.bat); alternatively, the name (or full path) " +
+                       "of the batch file to create (the name must end in '.bat')")]
+        public string RemoteUploadBatchFilePath { get; set; } = string.Empty;
+
         /// <summary>
         /// When true, show more status messages
         /// </summary>
@@ -183,6 +189,18 @@ namespace DMSDatasetRetriever
                 Console.WriteLine("Upload batch file options:");
                 Console.WriteLine(" {0,-25} {1}", "Parent directory depth:", ParentDirectoryDepth);
                 Console.WriteLine(" {0,-25} {1}", "Remote Upload Base URL:", RemoteUploadBaseURL);
+
+                if (!string.IsNullOrWhiteSpace(RemoteUploadBatchFilePath))
+                {
+                    if (RemoteUploadBatchFilePath.Trim().EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine(" {0} {1}", "Remote upload batch file path:", RemoteUploadBatchFilePath);
+                    }
+                    else
+                    {
+                        Console.WriteLine(" {0} {1}", "Directory to create the remote upload batch file:", RemoteUploadBatchFilePath);
+                    }
+                }
             }
 
             Console.WriteLine();

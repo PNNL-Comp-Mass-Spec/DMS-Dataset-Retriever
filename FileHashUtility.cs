@@ -343,7 +343,27 @@ namespace DMSDatasetRetriever
             try
             {
                 var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}.bat", DateTime.Now);
-                var uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
+
+                string uploadBatchFilePath;
+
+                if (string.IsNullOrWhiteSpace(Options.RemoteUploadBatchFilePath))
+                {
+                    uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
+                }
+                else if (Path.IsPathRooted(Options.RemoteUploadBatchFilePath))
+                {
+                    if (Options.RemoteUploadBatchFilePath.Trim().EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+                        uploadBatchFilePath = Options.RemoteUploadBatchFilePath;
+                    else
+                        uploadBatchFilePath = Path.Combine(Options.RemoteUploadBatchFilePath, batchFileName);
+                }
+                else
+                {
+                    if (Options.RemoteUploadBatchFilePath.Trim().EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+                        uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, Options.RemoteUploadBatchFilePath);
+                    else
+                        uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
+                }
 
                 if (Options.PreviewMode)
                 {
