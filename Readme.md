@@ -33,6 +33,10 @@ DMSDatasetRetriever.exe
   /I:DatasetInfoFile [/O:OutputDirectoryPath] 
   [/ChecksumMode:Mode] [/Overwrite] 
   [/ConnectionString:DMSConnectionString] 
+  [/ParentDepth:ParentDirectoryDepth]
+  [/RemoteURL:RemoteUploadBaseURL]
+  [/BatchFilePath:RemoteUploadBatchFile]
+  [/UseLinkFiles] 
   [/Preview] [/Verbose]
 ```
 
@@ -56,7 +60,25 @@ By default, if the dataset file already exists locally, it will only be replaced
 Use `/ConnectionString` to define the DMS database connection string
 * Defaults to `/ConnectionString:Server=gigasax;Database=DMS5;Trusted_Connection=yes`
 
-Use `/Preview` to simulate retrieving the files
+Use `/ParentDepth` to define the number of directories to traverse up from the output directory to find additional text files to add to a checksum file
+* Defaults to `/ParentDepth:2`
+
+Use `/RemoteURL` to specify the remote URL to use when creating an upload batch file
+* Only applicable for `/ChecksumMode:MoTrPAC` 
+* Defaults to `/RemoteURL:gs://motrpac-portal-transfer-pnnl/PASS1B-06/T70/`
+
+Use `/BatchFilePath` to specify either the path to the directory in which to create the upload batch file or the name (or full path) of the batch file to create 
+* Only applicable for `/ChecksumMode:MoTrPAC` 
+* By default, the program creates a batch file named UploadFiles_yyyy-MM-dd.bat in the output directory
+* Use `/BatchFilePath:F:\Upload\Test` to create the default-named batch file in the `F:\Upload\Test` directory
+* Use `/BatchFilePath:UploadFiles.bat` to create the batch file in the output directory, but name it `UploadFiles.bat`
+* Use `/BatchFilePath:C:\Temp\UploadFilesDCC.bat` to create the batch file at `C:\Temp\UploadFilesDCC.bat`
+
+Use `/UseLinkFiles` to create a local placeholder text file for each remote dataset file
+* The placeholder file will have the new name for the dataset file, as specified by the `TargetName` column in the dataset info file
+* The placeholder file will have the extension `.dslink`
+
+Use `/Preview` to simulate retrieving files (or creating .dslink files)
 
 Use `/Verbose` to see additional progress messages at the console
 
