@@ -1,0 +1,12 @@
+Dataset	TargetName	TargetDirectory
+Angiotensin_325-ETciD-30_2		MultiFragmentation\ETciD
+Angiotensin_325-ETciD-30_1		MultiFragmentation\ETciD
+Angiotensin_325-ETciD-15	Angiotensin_ETciD-15_325	MultiFragmentation\ETciD
+Angiotensin_325-EThcD-30	Angiotensin_EThcD-30_325	MultiFragmentation\EThcD
+Angiotensin_AllScans_1
+Angiotensin_AllScans_2	Angiotensin_AllScans	
+Angiotensin_325-ETD_2	Angiotensin_325-ETD2	ETD
+Angiotensin_325-ETD_1	Angiotensin_325-ETD1	ETD
+Angiotensin_325-HCD		CIDorHCD
+Angiotensin_325-CID		CIDorHCD
+QC_shew_19_01_R06_15May19_Brandi_Thermo-10408462	QC_shew_19_01_R06_15May19
