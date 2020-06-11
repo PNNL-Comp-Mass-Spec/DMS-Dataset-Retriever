@@ -152,7 +152,6 @@ namespace DMSDatasetRetriever
                 ReportError("Error in CreateChecksumFiles", ex);
                 return false;
             }
-
         }
 
         private bool FindSourceFiles(
@@ -630,7 +629,6 @@ namespace DMSDatasetRetriever
 
         private bool LoadInstrumentClassData(IDBTools dbTools)
         {
-
             try
             {
 
@@ -677,7 +675,6 @@ namespace DMSDatasetRetriever
                 ReportError("Error in LoadInstrumentClassData", ex);
                 return false;
             }
-
         }
 
         private void ReportError(string message, Exception ex)

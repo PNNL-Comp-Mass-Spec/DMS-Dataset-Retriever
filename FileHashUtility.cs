@@ -413,7 +413,9 @@ namespace DMSDatasetRetriever
                             }
 
                             if (parentDirectory != null && !parentDirectoryPaths.Contains(parentDirectory.FullName))
+                            {
                                 parentDirectoryPaths.Add(parentDirectory.FullName);
+                            }
                         }
 
                         writer.WriteLine();
@@ -427,7 +429,7 @@ namespace DMSDatasetRetriever
                 }
 
                 Console.WriteLine();
-                OnStatusEvent(string.Format("{0} file upload commands written", processedFiles.Count));
+                OnStatusEvent(string.Format("{0} file upload commands written to the batch file", processedFiles.Count));
                 Console.WriteLine();
 
             }
@@ -435,7 +437,6 @@ namespace DMSDatasetRetriever
             {
                 OnErrorEvent("Error in CreateUploadBatchFile", ex);
             }
-
         }
 
         private string GetBase64MD5(FileChecksumInfo fileChecksumInfo)
