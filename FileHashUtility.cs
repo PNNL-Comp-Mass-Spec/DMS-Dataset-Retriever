@@ -29,6 +29,45 @@ namespace DMSDatasetRetriever
         #endregion
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="options"></param>
+        public FileHashUtility(DatasetRetrieverOptions options)
+        {
+            Options = options;
+
+            if (string.IsNullOrWhiteSpace(Options.RemoteUploadBaseURL))
+            {
+                RemoteUploadURLDirectoriesToMatch = string.Empty;
+                return;
+            }
+
+            var directoryMatcher = new Regex("^[a-z]+://[^/]+/(?<Directories>.+)", RegexOptions.IgnoreCase);
+
+            var match = directoryMatcher.Match(Options.RemoteUploadBaseURL);
+            if (!match.Success)
+            {
+                throw new Exception(
+                    "RemoteUploadBaseURL is not of the form " +
+                    "gs://bucket-name/DirectoryA/DirectoryB or " +
+                    "http://server/DirectoryA/DirectoryB or similar; " +
+                    "it is " +
+                    Options.RemoteUploadBaseURL);
+            }
+
+            var uploadUrlDirectories = new List<string>();
+
+            foreach (var pathPart in match.Groups["Directories"].Value.Split('/'))
+            {
+                if (string.IsNullOrEmpty(pathPart))
+                    continue;
+                uploadUrlDirectories.Add(pathPart);
+            }
+
+            RemoteUploadURLDirectoriesToMatch = string.Join(Path.DirectorySeparatorChar.ToString(), uploadUrlDirectories) + Path.DirectorySeparatorChar;
+        }
+
+        /// <summary>
         /// Look for any text files in the specified directory, recursively searching subdirectories
         /// For any not present in processedFiles, append upload commands to the batch file
         /// </summary>
@@ -462,45 +501,6 @@ namespace DMSDatasetRetriever
             var base64MD5 = Convert.ToBase64String(byteArray.ToArray());
 
             return base64MD5;
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="options"></param>
-        public FileHashUtility(DatasetRetrieverOptions options)
-        {
-            Options = options;
-
-            if (string.IsNullOrWhiteSpace(Options.RemoteUploadBaseURL))
-            {
-                RemoteUploadURLDirectoriesToMatch = string.Empty;
-                return;
-            }
-
-            var directoryMatcher = new Regex("^[a-z]+://[^/]+/(?<Directories>.+)", RegexOptions.IgnoreCase);
-
-            var match = directoryMatcher.Match(Options.RemoteUploadBaseURL);
-            if (!match.Success)
-            {
-                throw new Exception(
-                    "RemoteUploadBaseURL is not of the form " +
-                    "gs://bucket-name/DirectoryA/DirectoryB or " +
-                    "http://server/DirectoryA/DirectoryB or similar; " +
-                    "it is " +
-                    Options.RemoteUploadBaseURL);
-            }
-
-            var uploadUrlDirectories = new List<string>();
-
-            foreach (var pathPart in match.Groups["Directories"].Value.Split('/'))
-            {
-                if (string.IsNullOrEmpty(pathPart))
-                    continue;
-                uploadUrlDirectories.Add(pathPart);
-            }
-
-            RemoteUploadURLDirectoriesToMatch = string.Join(Path.DirectorySeparatorChar.ToString(), uploadUrlDirectories) + Path.DirectorySeparatorChar;
         }
 
         private string GenerateRemoteUrl(string fullFilePath)

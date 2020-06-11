@@ -25,6 +25,15 @@ namespace DMSDatasetRetriever
         /// </summary>
         public long BytesCopied { get; private set; }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="options"></param>
+        public FileCopyUtility(DatasetRetrieverOptions options)
+        {
+            Options = options;
+        }
+
         private void ComputeTotalBytesAddDirectory(
             DatasetInfo datasetInfo,
             FileSystemInfo outputDirectory,
@@ -307,13 +316,7 @@ namespace DMSDatasetRetriever
             }
         }
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="options"></param>
-        public FileCopyUtility(DatasetRetrieverOptions options)
         {
-            Options = options;
         }
     }
 }
