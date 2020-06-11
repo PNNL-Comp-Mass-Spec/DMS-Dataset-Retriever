@@ -270,16 +270,18 @@ namespace DMSDatasetRetriever
                 var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
                 var updateRequired = false;
 
+                var fileSizeBytes = dataFileToHash.Exists ? dataFileToHash.Length : 0L;
+
                 if (string.IsNullOrWhiteSpace(fileChecksumInfo.SHA1))
                 {
-                    totalBytesToHash += dataFile.Length;
+                    totalBytesToHash += fileSizeBytes;
                     updateRequired = true;
                 }
 
                 if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC &&
                     string.IsNullOrWhiteSpace(fileChecksumInfo.MD5))
                 {
-                    totalBytesToHash += dataFile.Length;
+                    totalBytesToHash += fileSizeBytes;
                     updateRequired = true;
                 }
 
