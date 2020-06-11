@@ -208,7 +208,7 @@ namespace DMSDatasetRetriever
                             var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
                             if (!validHeaders)
                             {
-                                OnWarningEvent("The checksum file header line does not contain the expected columns: " + dataLine);
+                                OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
                                 var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
                                 OnDebugEvent("Supported headers are: " + defaultHeaderNames);
                             }

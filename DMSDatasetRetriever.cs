@@ -584,16 +584,16 @@ namespace DMSDatasetRetriever
                             if (!headerLineParsed)
                             {
                                 ReportWarning("No valid column names were found in the header line of the dataset info file; unable to continue");
-                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames);
-                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
+                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames, "   ");
+                                OnDebugEvent("Supported headers are:\n  " + defaultHeaderNames);
                                 return false;
                             }
 
                             if (columnMap[DatasetInfoColumns.DatasetName] < 0)
                             {
                                 ReportWarning("Dataset info file is missing the Dataset name column on the header line; unable to continue");
-                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames);
-                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
+                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames, "   ");
+                                OnDebugEvent("Supported headers are:\n  " + defaultHeaderNames);
                                 return false;
                             }
 
