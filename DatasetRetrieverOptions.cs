@@ -112,7 +112,7 @@ namespace DMSDatasetRetriever
         [Option("ParentDirectoryDepth", "ParentDepth", HelpShowsDefault = false,
             HelpText = "When creating the batch file with upload commands, " +
                        "look for additional text files in directories below the parent directory (if ParentDirectoryDepth=1) " +
-                       "or the parent of the parent directory (if ParentDirectoryDepth=2)")]
+                       "or below the parent of the parent directory (if ParentDirectoryDepth=2)")]
         public int ParentDirectoryDepth { get; set; } = 2;
 
         /// <summary>
@@ -145,8 +145,8 @@ namespace DMSDatasetRetriever
             HelpText = "When true, for each remote dataset file, " +
                        "create a local text file that contains the remote file path. " +
                        "This saves time and disk space by not copying the file locally, " +
-                       "but checksum speeds will be slower (due to reading data over the network), " +
-                       "and when the upload occurs, the data will have to be read from the storage server, " +
+                       "but checksum speeds will be slower (due to reading data over the network). " +
+                       "Also, when the upload occurs, the data will have to be read from the storage server, " +
                        "then pushed to the remote server, leading to more network traffic. " +
                        // ReSharper disable once StringLiteralTypo
                        "Link files have extension .dslink")]
