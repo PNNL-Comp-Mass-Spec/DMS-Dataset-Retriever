@@ -261,10 +261,17 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private bool GetDatasetFileHashInfo(IDBTools dbTools, IEnumerable<DatasetInfo> datasetList)
+        private bool GetDatasetFileHashInfo(IDBTools dbTools, IReadOnlyCollection<DatasetInfo> datasetList)
         {
+            if (datasetList.Count == 0)
+            {
+                ReportWarning("Error: Empty dataset list passed to GetDatasetFileHashInfo");
+                return false;
+            }
+
             var datasetIDInfoMap = new Dictionary<int, DatasetInfo>();
             var datasetIDs = new List<int>();
+
             foreach (var dataset in datasetList)
             {
                 if (dataset.DatasetID <= 0)
@@ -274,6 +281,12 @@ namespace DMSDatasetRetriever
                 datasetIDInfoMap.Add(dataset.DatasetID, dataset);
             }
             var datasetIdList = string.Join(", ", datasetIDs);
+
+            if (datasetIDs.Count == 0)
+            {
+                ReportWarning("Error: None of the items passed to GetDatasetFileHashInfo in datasetList has a non-zero Dataset ID");
+                return false;
+            }
 
             var columns = new List<string>
                     {
