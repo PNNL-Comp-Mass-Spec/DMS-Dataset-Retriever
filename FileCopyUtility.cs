@@ -314,13 +314,17 @@ namespace DMSDatasetRetriever
                 if (Options.PreviewMode)
                 {
                     if (Options.UseDatasetLinkFiles)
+                    {
                         OnStatusEvent(string.Format("Preview create link file for {0}\n  at {1}",
                             FileTools.CompactPathString(sourceFile.FullName, 100),
                             FileTools.CompactPathString(targetFile.FullName, 120)));
+                    }
                     else
+                    {
                         OnStatusEvent(string.Format("Preview copy {0}\n  to {1}",
                             FileTools.CompactPathString(sourceFile.FullName, 100),
                             FileTools.CompactPathString(targetFile.FullName, 120)));
+                    }
                 }
                 else
                 {
@@ -362,7 +366,7 @@ namespace DMSDatasetRetriever
         {
             try
             {
-                if (targetFile.Directory != null && !targetFile.Directory.Exists)
+                if (targetFile.Directory?.Exists == false)
                 {
                     OnStatusEvent("Creating missing directory: " + PathUtils.CompactPathString(targetFile.Directory.FullName, 100));
                     targetFile.Directory.Create();

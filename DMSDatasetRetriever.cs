@@ -844,7 +844,7 @@ namespace DMSDatasetRetriever
             Console.WriteLine();
             Console.WriteLine();
 
-            var headerLine = "** Problems encountered during processing **";
+            const string headerLine = "** Problems encountered during processing **";
             Console.WriteLine(new string('*', headerLine.Length));
             Console.WriteLine(headerLine);
             Console.WriteLine(new string('*', headerLine.Length));

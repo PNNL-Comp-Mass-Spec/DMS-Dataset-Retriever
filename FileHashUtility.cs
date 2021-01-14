@@ -110,7 +110,7 @@ namespace DMSDatasetRetriever
             }
 
             // Use "call cmd /c" because gsutil returns a non-zero exit code, and that will terminate a batch file
-            var gsutilCommand = "call cmd /c gsutil";
+            const string gsutilCommand = "call cmd /c gsutil";
 
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (string.IsNullOrWhiteSpace(md5Base64))
