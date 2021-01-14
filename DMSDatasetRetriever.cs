@@ -167,7 +167,6 @@ namespace DMSDatasetRetriever
 
             try
             {
-
                 var myEmslDownloader = new MyEMSLReader.Downloader();
 
                 foreach (var dataset in datasetList)
@@ -339,7 +338,6 @@ namespace DMSDatasetRetriever
 
         private bool GetDatasetFolderPathInfo(IDBTools dbTools, IEnumerable<DatasetInfo> datasetList)
         {
-
             var datasetNameInfoMap = new Dictionary<string, DatasetInfo>(StringComparer.OrdinalIgnoreCase);
 
             var quotedDatasetNames = new List<string>();
@@ -414,7 +412,6 @@ namespace DMSDatasetRetriever
 
                 var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Data_Purged", 0);
                 datasetInfo.InstrumentDataPurged = IntToBool(instrumentDataPurged);
-
 
                 var myEmslState = dbTools.GetColumnValue(resultRow, columnMap, "MyEMSLState", 0);
                 datasetInfo.DatasetInMyEMSL = IntToBool(myEmslState);
@@ -661,7 +658,6 @@ namespace DMSDatasetRetriever
         {
             try
             {
-
                 var columns = new List<string>
                     {
                         "Instrument_Class",
@@ -734,7 +730,6 @@ namespace DMSDatasetRetriever
         /// <returns></returns>
         public bool RetrieveDatasetFiles(string datasetInfoFilePath, string outputDirectoryPath)
         {
-
             try
             {
                 ErrorMessages.Clear();
@@ -752,7 +747,6 @@ namespace DMSDatasetRetriever
                 var outputDirectory = new DirectoryInfo(outputDirectoryPath);
                 if (!outputDirectory.Exists)
                 {
-
                     if (Options.PreviewMode)
                     {
                         OnStatusEvent("Preview create directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
@@ -891,6 +885,4 @@ namespace DMSDatasetRetriever
 
         #endregion
     }
-
-
 }

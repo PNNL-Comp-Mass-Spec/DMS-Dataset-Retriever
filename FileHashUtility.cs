@@ -147,7 +147,6 @@ namespace DMSDatasetRetriever
         /// <returns></returns>
         private bool ComputeFileChecksums(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
         {
-
             try
             {
                 var totalBytesToHash = ComputeTotalBytesToHash(checksumFileUpdater, out var datasetCountToProcess);
@@ -549,7 +548,6 @@ namespace DMSDatasetRetriever
                     "{0} written to the batch file",
                     DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands")));
                 Console.WriteLine();
-
             }
             catch (Exception ex)
             {
@@ -646,7 +644,6 @@ namespace DMSDatasetRetriever
 
         private FileInfo GetLocalOrRemoteFile(FileInfo dataFile)
         {
-
             if (dataFile.Exists)
             {
                 return dataFile;

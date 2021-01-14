@@ -93,7 +93,6 @@ namespace DMSDatasetRetriever
 
                 Thread.Sleep(1500);
                 return -1;
-
             }
             catch (Exception ex)
             {
@@ -101,7 +100,6 @@ namespace DMSDatasetRetriever
                 Thread.Sleep(1500);
                 return -1;
             }
-
         }
 
         #region "Event handlers"

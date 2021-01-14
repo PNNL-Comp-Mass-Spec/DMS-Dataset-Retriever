@@ -228,7 +228,6 @@ namespace DMSDatasetRetriever
                                 ParseChecksumFileLineCPTAC(columnMap, lineParts);
                                 break;
                         }
-
                     }
                 }
             }

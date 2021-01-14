@@ -48,7 +48,6 @@ namespace DMSDatasetRetriever
             FileSystemInfo outputDirectory,
             DatasetFileOrDirectory sourceDirectoryInfo)
         {
-
             var sourceDirectory = new DirectoryInfo(sourceDirectoryInfo.SourcePath);
             if (!sourceDirectory.Exists)
                 return;
@@ -189,7 +188,6 @@ namespace DMSDatasetRetriever
                         OnProgressUpdate("Copying files", percentComplete);
                         lastProgressTime = DateTime.UtcNow;
                     }
-
                 }
 
                 return true;
@@ -199,7 +197,6 @@ namespace DMSDatasetRetriever
                 OnErrorEvent("Error in CopyDatasetFilesToTarget", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -384,6 +381,5 @@ namespace DMSDatasetRetriever
                 OnErrorEvent("Error in CreateLinkFile", ex);
             }
         }
-
     }
 }

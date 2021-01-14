@@ -144,6 +144,5 @@ namespace DMSDatasetRetriever
         {
             return string.Format("Dataset ID {0}: {1}", DatasetID, DatasetName);
         }
-
     }
 }
