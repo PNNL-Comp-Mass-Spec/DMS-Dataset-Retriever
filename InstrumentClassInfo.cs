@@ -6,6 +6,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class InstrumentClassInfo
     {
+        // Ignore Spelling: tof, baf, uimf
 
         /// <summary>
         /// Raw data types

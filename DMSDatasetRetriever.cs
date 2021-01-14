@@ -14,6 +14,8 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DMSDatasetRetriever : EventNotifier
     {
+        // Ignore Spelling: Purgable
+
         #region "Constants and Enums"
 
         private enum DatasetInfoColumns

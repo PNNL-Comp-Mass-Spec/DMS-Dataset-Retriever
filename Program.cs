@@ -9,6 +9,7 @@ namespace DMSDatasetRetriever
     internal static class Program
     {
         static int Main(string[] args)
+        // Ignore Spelling: conf
         {
             var asmName = typeof(Program).GetTypeInfo().Assembly.GetName();
             var exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);       // Alternatively: System.AppDomain.CurrentDomain.FriendlyName

@@ -10,6 +10,8 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DatasetRetrieverOptions
     {
+        // Ignore Spelling: motrpac, pnnl, yyyy, conf
+
         /// <summary>
         /// Program date
         /// </summary>
@@ -124,7 +126,7 @@ namespace DMSDatasetRetriever
 
         [Option("RemoteUploadBaseURL", "RemoteUploadURL", "RemoteURL", HelpShowsDefault = false,
             HelpText = "Remote upload base URL to use when creating the batch file with upload commands (MoTrPAC only); " +
-                       "defaults to the MoTrPAC google cloud bucket. " +
+                       "defaults to the MoTrPAC Google cloud bucket. " +
                        "Local data files must be organized in a hierarchy that matches the directory names in this URL")]
         // ReSharper disable once StringLiteralTypo
         public string RemoteUploadBaseURL { get; set; } = "gs://motrpac-portal-transfer-pnnl/PASS1B-06/T70/";
