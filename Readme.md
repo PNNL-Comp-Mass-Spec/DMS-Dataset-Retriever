@@ -75,8 +75,10 @@ Use `/BatchFilePath` to specify either the path to the directory in which to cre
 * Use `/BatchFilePath:C:\Temp\UploadFilesDCC.bat` to create the batch file at `C:\Temp\UploadFilesDCC.bat`
 
 Use `/UseLinkFiles` to create a local placeholder text file for each remote dataset file
-* The placeholder file will have the new name for the dataset file, as specified by the `TargetName` column in the dataset info file
-* The placeholder file will have the extension `.dslink`
+* This saves time and disk space by not copying the file locally, but checksum speeds will be slower (due to reading data over the network)
+* Also, when the upload occurs, the data will have to be read from the storage server, then pushed to the remote server, leading to more network traffic
+* Each placeholder file will have the new name for the dataset file, as specified by the `TargetName` column in the dataset info file
+  * Placeholder files have the extension `.dslink`
 
 Use `/Preview` to simulate retrieving files (or creating .dslink files)
 
