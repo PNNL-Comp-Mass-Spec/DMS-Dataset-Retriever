@@ -6,7 +6,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class InstrumentClassInfo
     {
-        // Ignore Spelling: tof, baf, uimf
+        // Ignore Spelling: tof, baf, uimf, purgable
 
         /// <summary>
         /// Raw data types
@@ -50,10 +50,10 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="instrumentClassName"></param>
-        /// <param name="rawDataType"></param>
-        /// <param name="isPurgable"></param>
-        /// <param name="comment"></param>
+        /// <param name="instrumentClassName">Instrument class name</param>
+        /// <param name="rawDataType">Raw data type</param>
+        /// <param name="isPurgable">True if is purgable</param>
+        /// <param name="comment">Comment</param>
         public InstrumentClassInfo(string instrumentClassName, string rawDataType, bool isPurgable, string comment)
         {
             InstrumentClassName = instrumentClassName;
@@ -65,8 +65,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Convert from raw data type name to the enum
         /// </summary>
-        /// <param name="rawDataType"></param>
-        /// <returns></returns>
+        /// <param name="rawDataType">Raw data type</param>
         private RawDataTypes GetRawDataTypeByName(string rawDataType)
         {
             switch (rawDataType.ToLower())
@@ -100,7 +99,6 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Show the instrument class name and raw data type
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return string.Format("{0}: {1}", InstrumentClassName, RawDataType.ToString());

@@ -220,10 +220,9 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Create a string showing the item count followed by the units, which will differ depending on if the count is 1 or otherwise
         /// </summary>
-        /// <param name="itemCount"></param>
-        /// <param name="unitsIfSingle"></param>
-        /// <param name="unitsIfMultiOrZero"></param>
-        /// <returns></returns>
+        /// <param name="itemCount">Item count</param>
+        /// <param name="unitsIfSingle">Units if just one item</param>
+        /// <param name="unitsIfMultiOrZero">Units if zero items or multiple items</param>
         public static string GetCountWithUnits(int itemCount, string unitsIfSingle, string unitsIfMultiOrZero)
         {
             return string.Format("{0} {1}", itemCount, itemCount == 1 ? unitsIfSingle : unitsIfMultiOrZero);
@@ -525,9 +524,8 @@ namespace DMSDatasetRetriever
         /// Get the first n characters from value
         /// Append "..." if the value is more than n characters long
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="n"></param>
-        /// <returns></returns>
+        /// <param name="value">Value to examine</param>
+        /// <param name="n">Number of characters to return</param>
         private string GetStartOfString(string value, int n)
         {
             if (value.Length <= n)
@@ -554,7 +552,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Convert value to True or False
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">Value</param>
         /// <returns>True if valueText contains a non-zero integer (positive or negative); otherwise, false</returns>
         private bool IntToBool(int value)
         {
@@ -725,9 +723,8 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Read the dataset info file and retrieve the instrument data files for the specified datasets
         /// </summary>
-        /// <param name="datasetInfoFilePath"></param>
-        /// <param name="outputDirectoryPath"></param>
-        /// <returns></returns>
+        /// <param name="datasetInfoFilePath">Dataset info file path</param>
+        /// <param name="outputDirectoryPath">Output directory path</param>
         public bool RetrieveDatasetFiles(string datasetInfoFilePath, string outputDirectoryPath)
         {
             try
@@ -776,7 +773,7 @@ namespace DMSDatasetRetriever
         /// </summary>
         /// <param name="datasetList">Datasets to retrieve</param>
         /// <param name="outputDirectory">Directory where files should be copied</param>
-        /// <returns></returns>
+        /// <returns>True if success, false if an error</returns>
         // ReSharper disable once UnusedMember.Global
         public bool RetrieveDatasetFiles(List<DatasetInfo> datasetList, DirectoryInfo outputDirectory)
         {
@@ -793,7 +790,7 @@ namespace DMSDatasetRetriever
         /// <param name="datasetList">Datasets to retrieve</param>
         /// <param name="outputDirectory">Directory where files should be copied</param>
         /// <param name="clearCachedMessages">When true, clear ErrorMessages and WarningMessages</param>
-        /// <returns></returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrieveDatasetFiles(List<DatasetInfo> datasetList, DirectoryInfo outputDirectory, bool clearCachedMessages)
         {
             try

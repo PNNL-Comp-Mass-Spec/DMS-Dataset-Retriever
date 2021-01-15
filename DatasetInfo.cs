@@ -102,7 +102,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="datasetName"></param>
+        /// <param name="datasetName">Dataset name</param>
         public DatasetInfo(string datasetName)
         {
             DatasetName = datasetName;
@@ -139,7 +139,6 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Show the dataset ID and name
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return string.Format("Dataset ID {0}: {1}", DatasetID, DatasetName);

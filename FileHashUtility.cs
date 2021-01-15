@@ -33,7 +33,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="options"></param>
+        /// <param name="options">Options</param>
         public FileHashUtility(DatasetRetrieverOptions options)
         {
             Options = options;
@@ -73,9 +73,9 @@ namespace DMSDatasetRetriever
         /// Look for any text files in the specified directory, recursively searching subdirectories
         /// For any not present in processedFiles, append upload commands to the batch file
         /// </summary>
-        /// <param name="writer"></param>
-        /// <param name="processedFiles"></param>
-        /// <param name="directory"></param>
+        /// <param name="writer">Writer</param>
+        /// <param name="processedFiles">List of processed files</param>
+        /// <param name="directory">Directory</param>
         private void AppendTextFilesToBatchFile(TextWriter writer, ISet<string> processedFiles, DirectoryInfo directory)
         {
             var textFiles = directory.GetFiles("*.txt", SearchOption.AllDirectories).ToList();
@@ -141,10 +141,9 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Compute checksums for files in checksumFileUpdater.DataFiles
         /// </summary>
-        /// <param name="checksumFileUpdater"></param>
-        /// <param name="progressAtStart"></param>
-        /// <param name="progressAtEnd"></param>
-        /// <returns></returns>
+        /// <param name="checksumFileUpdater">Checksum file updater</param>
+        /// <param name="progressAtStart">Progress at start</param>
+        /// <param name="progressAtEnd">Progress at the end</param>
         private bool ComputeFileChecksums(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
         {
             try
@@ -298,8 +297,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Create (or update) the checksum file for each output directory
         /// </summary>
-        /// <param name="datasetList"></param>
-        /// <returns></returns>
+        /// <param name="datasetList">Dataset list</param>
         public bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList)
         {
             if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)

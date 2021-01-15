@@ -46,9 +46,9 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor for copying a file
         /// </summary>
-        /// <param name="datasetInfo"></param>
-        /// <param name="sourceFilePath"></param>
-        /// <param name="relativeTargetFilePath"></param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="relativeTargetFilePath">Relative target file path</param>
         /// <param name="downloader">MyEMSL Downloader</param>
         public DatasetFileOrDirectory(DatasetInfo datasetInfo, string sourceFilePath, string relativeTargetFilePath, MyEMSLReader.Downloader downloader = null)
         {
@@ -65,9 +65,9 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor for copying a file or a directory
         /// </summary>
-        /// <param name="datasetInfo"></param>
-        /// <param name="sourceFileOrDirectory"></param>
-        /// <param name="relativeTargetPath"></param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFileOrDirectory">Source file or directory</param>
+        /// <param name="relativeTargetPath">Relative target path</param>
         /// <param name="downloader">MyEMSL Downloader</param>
         public DatasetFileOrDirectory(
             DatasetInfo datasetInfo,
@@ -101,7 +101,6 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Show the file or directory path
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             if (IsDirectory)

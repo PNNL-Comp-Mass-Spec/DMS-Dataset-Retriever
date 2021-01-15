@@ -52,7 +52,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">Filename</param>
         public FileChecksumInfo(string fileName)
         {
             FileName = fileName;
@@ -68,7 +68,6 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Show the filename
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return FileName;

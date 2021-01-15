@@ -37,7 +37,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="options"></param>
+        /// <param name="options">Optiosn</param>
         public FileCopyUtility(DatasetRetrieverOptions options)
         {
             Options = options;
@@ -133,9 +133,8 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Copy dataset files to the output directory
         /// </summary>
-        /// <param name="sourceFilesByDataset"></param>
-        /// <param name="outputDirectory"></param>
-        /// <returns></returns>
+        /// <param name="sourceFilesByDataset">Source files, by dataset</param>
+        /// <param name="outputDirectory">Output directory</param>
         public bool CopyDatasetFilesToTarget(
             Dictionary<DatasetInfo, List<DatasetFileOrDirectory>> sourceFilesByDataset,
             DirectoryInfo outputDirectory)
@@ -202,10 +201,10 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Copy remote dataset directory to the output directory
         /// </summary>
-        /// <param name="fileTools"></param>
-        /// <param name="datasetInfo"></param>
-        /// <param name="sourceDirectoryInfo"></param>
-        /// <param name="outputDirectory"></param>
+        /// <param name="fileTools">File tools</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceDirectoryInfo">Source directory</param>
+        /// <param name="outputDirectory">Output directory</param>
         public void CopyDirectoryToTarget(
             FileTools fileTools,
             DatasetInfo datasetInfo,
@@ -259,10 +258,10 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Copy remote dataset file to the output directory
         /// </summary>
-        /// <param name="fileTools"></param>
-        /// <param name="datasetInfo"></param>
-        /// <param name="sourceFileInfo"></param>
-        /// <param name="outputDirectory"></param>
+        /// <param name="fileTools">File tools</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFileInfo">Source file info</param>
+        /// <param name="outputDirectory">Output directory</param>
         public void CopyFileToTarget(
             FileTools fileTools,
             DatasetInfo datasetInfo,

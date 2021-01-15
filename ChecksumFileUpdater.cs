@@ -82,8 +82,8 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dataFileDirectory"></param>
-        /// <param name="checksumFileMode"></param>
+        /// <param name="dataFileDirectory">Data file directory</param>
+        /// <param name="checksumFileMode">Checksum mode</param>
         public ChecksumFileUpdater(DirectoryInfo dataFileDirectory, DatasetRetrieverOptions.ChecksumFileType checksumFileMode)
         {
             ChecksumFileMode = checksumFileMode;
@@ -97,7 +97,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Add a data file to be hashed
         /// </summary>
-        /// <param name="dataFile"></param>
+        /// <param name="dataFile">Data file info</param>
         public void AddDataFile(FileInfo dataFile)
         {
             DataFiles.Add(dataFile);
@@ -311,7 +311,6 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Create or update the checksum file
         /// </summary>
-        /// <returns></returns>
         public bool WriteChecksumFile()
         {
             try
