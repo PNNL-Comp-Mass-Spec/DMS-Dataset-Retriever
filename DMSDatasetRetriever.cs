@@ -741,6 +741,11 @@ namespace DMSDatasetRetriever
                 {
                     outputDirectoryPath = ".";
                 }
+                else
+                {
+                    // Assure that the output directory path uses Windows slashes and does not end in a backslash
+                    outputDirectoryPath = ChecksumFileUpdater.UpdatePathSeparators(outputDirectoryPath, false).TrimEnd('\\');
+                }
 
                 var datasetInfoLoaded = LoadDatasetInfoFile(datasetInfoFilePath, out var datasetList);
                 if (!datasetInfoLoaded)
