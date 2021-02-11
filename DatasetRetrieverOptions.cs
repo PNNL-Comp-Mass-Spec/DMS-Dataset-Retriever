@@ -10,7 +10,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DatasetRetrieverOptions
     {
-        // Ignore Spelling: motrpac, pnnl, yyyy, conf
+        // Ignore Spelling: motrpac, pnnl, yyyy, conf, YYYYMMDD, yyyy-MM-dd
 
         /// <summary>
         /// Program date
@@ -39,10 +39,10 @@ namespace DMSDatasetRetriever
             CPTAC = 1,
 
             /// <summary>
-            /// Create a file named DirectoryName_MANIFEST.txt in each target directory
+            /// Create a file named file_manifest_YYYYMMDD.csv in each target directory
             /// </summary>
             /// <remarks>
-            /// Tab-delimited file with columns: raw_file, fraction, technical_replicate, tech_rep_comment, md5, sha1
+            /// CSV file with columns: file_name, md5, sha1
             /// </remarks>
             MoTrPAC = 2
         }
@@ -95,6 +95,28 @@ namespace DMSDatasetRetriever
                         value, enumNames);
                 }
             }
+        }
+
+        private DateTime mChecksumFileNameDate;
+
+        /// <summary>
+        /// Checksum file name date
+        /// </summary>
+        public DateTime ChecksumFileNameDate
+        {
+            get => mChecksumFileNameDate.Equals(DateTime.MinValue) ? DateTime.Now : mChecksumFileNameDate;
+            private set => mChecksumFileNameDate = value;
+        }
+
+        /// <summary>
+        /// User-defined Checksum file name date
+        /// </summary>
+        [Option("ChecksumFileNameDateText", "ChecksumDate", HelpShowsDefault = false,
+            HelpText = "Date to use when generating the checksum filename when the Checksum Mode is MOTRPAC")]
+        public string ChecksumFileNameDateText
+        {
+            get => ChecksumFileNameDate.ToString("yyyy-MM-dd");
+            set => ChecksumFileNameDate = DateTime.TryParse(value, out var fileNameDate) ? fileNameDate : DateTime.MinValue;
         }
 
         /// <summary>
@@ -171,6 +193,7 @@ namespace DMSDatasetRetriever
             DatasetInfoFilePath = string.Empty;
             OutputDirectoryPath = string.Empty;
             ChecksumFileMode = ChecksumFileType.CPTAC;
+            ChecksumFileNameDateText = string.Empty;
         }
 
         /// <summary>
@@ -205,6 +228,8 @@ namespace DMSDatasetRetriever
             Console.WriteLine(" {0,-25} {1}", "Use dataset link files:", UseDatasetLinkFiles);
 
             Console.WriteLine(" {0,-25} {1}", "Checksum file mode:", ChecksumFileModeName);
+
+            Console.WriteLine(" {0,-25} {1:yyyy-MM-dd}", "Checksum file date:", ChecksumFileNameDate);
 
             if (ChecksumFileMode == ChecksumFileType.MoTrPAC)
             {

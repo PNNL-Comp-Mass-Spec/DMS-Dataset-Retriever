@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace DMSDatasetRetriever
 {
@@ -13,6 +14,11 @@ namespace DMSDatasetRetriever
         /// File name
         /// </summary>
         public string FileName { get; }
+
+        /// <summary>
+        /// Full file path
+        /// </summary>
+        public string FilePath { get; }
 
         /// <summary>
         /// Fraction number
@@ -52,10 +58,11 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="fileName">Filename</param>
-        public FileChecksumInfo(string fileName)
+        /// <param name="filePath">File path</param>
+        public FileChecksumInfo(string filePath)
         {
-            FileName = fileName;
+            FileName = Path.GetFileName(filePath);
+            FilePath = filePath;
             MD5 = string.Empty;
             MD5_Base64 = string.Empty;
             SHA1 = string.Empty;

@@ -142,26 +142,43 @@ namespace DMSDatasetRetriever
         /// Compute checksums for files in checksumFileUpdater.DataFiles
         /// </summary>
         /// <param name="checksumFileUpdater">Checksum file updater</param>
+        /// <param name="baseOutputDirectoryPath">Checksum file updater</param>
         /// <param name="progressAtStart">Progress at start</param>
         /// <param name="progressAtEnd">Progress at the end</param>
-        private bool ComputeFileChecksums(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
+        private bool ComputeFileChecksums(
+            ChecksumFileUpdater checksumFileUpdater,
+            string baseOutputDirectoryPath,
+            float progressAtStart,
+            float progressAtEnd)
         {
             try
             {
-                var totalBytesToHash = ComputeTotalBytesToHash(checksumFileUpdater, out var datasetCountToProcess);
+                var totalBytesToHash = ComputeTotalBytesToHash(checksumFileUpdater, baseOutputDirectoryPath, out var datasetCountToProcess);
 
                 long totalBytesHashed = 0;
                 var lastProgressTime = DateTime.UtcNow;
 
+                var checksumFile = new FileInfo(checksumFileUpdater.ChecksumFilePath);
+
                 if (datasetCountToProcess == 0)
                 {
+                    if (checksumFile.Exists && checksumFile.Length > 0)
+                    {
+                        Console.WriteLine();
+                        OnStatusEvent(string.Format(
+                            "Checksum values are already up to date for {0} in {1}",
+                            DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets"),
+                            Path.GetFileName(checksumFileUpdater.ChecksumFilePath)));
+
+                        return true;
+                    }
+
                     Console.WriteLine();
                     OnStatusEvent(string.Format(
-                        "Checksum values are already up to date for {0} in {1}",
-                        DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets"),
-                        Path.GetFileName(checksumFileUpdater.ChecksumFilePath)));
-
-                    return true;
+                        "Loaded checksum values from an existing file, but need to create {0} for {1}",
+                        PathUtils.CompactPathString(checksumFileUpdater.ChecksumFilePath, 80),
+                        DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets")
+                    ));
                 }
 
                 Console.WriteLine();
@@ -184,7 +201,7 @@ namespace DMSDatasetRetriever
 
                 foreach (var dataFile in checksumFileUpdater.DataFiles)
                 {
-                    var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
+                    var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile, baseOutputDirectoryPath);
 
                     var fileToHash = GetLocalOrRemoteFile(dataFile);
 
@@ -258,7 +275,10 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private long ComputeTotalBytesToHash(ChecksumFileUpdater checksumFileUpdater, out int datasetCountToProcess)
+        private long ComputeTotalBytesToHash(
+            ChecksumFileUpdater checksumFileUpdater,
+            string baseOutputDirectoryPath,
+            out int datasetCountToProcess)
         {
             long totalBytesToHash = 0;
             datasetCountToProcess = 0;
@@ -267,7 +287,7 @@ namespace DMSDatasetRetriever
             {
                 var dataFileToHash = GetLocalOrRemoteFile(dataFile);
 
-                var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile);
+                var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile, baseOutputDirectoryPath);
                 var updateRequired = false;
 
                 var fileSizeBytes = dataFileToHash.Exists ? dataFileToHash.Length : 0L;
@@ -298,7 +318,10 @@ namespace DMSDatasetRetriever
         /// Create (or update) the checksum file for each output directory
         /// </summary>
         /// <param name="datasetList">Dataset list</param>
-        public bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList)
+        /// <param name="baseOutputDirectoryPath">
+        /// Base output directory (used when checksumFileMode is ChecksumFileType.MoTrPAC)
+        /// </param>
+        public bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList, string baseOutputDirectoryPath)
         {
             if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
             {
@@ -326,9 +349,17 @@ namespace DMSDatasetRetriever
                         continue;
                     }
 
-                    var targetDirectory = dataset.TargetDirectoryFiles.First().Directory;
+                    DirectoryInfo checksumFileDirectory;
+                    if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC && baseOutputDirectoryPath.Length > 0)
+                    {
+                        checksumFileDirectory = new DirectoryInfo(baseOutputDirectoryPath);
+                    }
+                    else
+                    {
+                        checksumFileDirectory = dataset.TargetDirectoryFiles.First().Directory;
+                    }
 
-                    var checksumFileUpdater = GetChecksumUpdater(checksumData, targetDirectory);
+                    var checksumFileUpdater = GetChecksumUpdater(checksumData, checksumFileDirectory, baseOutputDirectoryPath);
 
                     foreach (var datasetFile in dataset.TargetDirectoryFiles)
                     {
@@ -357,7 +388,7 @@ namespace DMSDatasetRetriever
                     var progressAtStart = itemsProcessed * progressChunkSize;
                     var progressAtEnd = (itemsProcessed + 1) * progressChunkSize;
 
-                    var updateSuccess = CreateOrUpdateChecksumFile(item.Value, progressAtStart, progressAtEnd);
+                    var updateSuccess = CreateOrUpdateChecksumFile(item.Value, baseOutputDirectoryPath, progressAtStart, progressAtEnd);
                     if (updateSuccess)
                         successCount++;
 
@@ -366,7 +397,7 @@ namespace DMSDatasetRetriever
 
                 var checksumSuccessOverall = (successCount == checksumData.Count);
 
-                CreateUploadBatchFile(checksumData);
+                CreateUploadBatchFile(checksumData, baseOutputDirectoryPath);
 
                 return checksumSuccessOverall;
             }
@@ -377,13 +408,17 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private bool CreateOrUpdateChecksumFile(ChecksumFileUpdater checksumFileUpdater, float progressAtStart, float progressAtEnd)
+        private bool CreateOrUpdateChecksumFile(
+            ChecksumFileUpdater checksumFileUpdater,
+            string baseOutputDirectoryPath,
+            float progressAtStart,
+            float progressAtEnd)
         {
             try
             {
                 checksumFileUpdater.LoadExistingChecksumFile();
 
-                var success = ComputeFileChecksums(checksumFileUpdater, progressAtStart, progressAtEnd);
+                var success = ComputeFileChecksums(checksumFileUpdater, baseOutputDirectoryPath, progressAtStart, progressAtEnd);
 
                 if (success && !Options.PreviewMode)
                 {
@@ -399,7 +434,9 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void CreateUploadBatchFile(IReadOnlyDictionary<string, ChecksumFileUpdater> checksumData)
+        private void CreateUploadBatchFile(
+            IReadOnlyDictionary<string, ChecksumFileUpdater> checksumData,
+            string baseOutputDirectoryPath)
         {
             if (Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
             {
@@ -504,17 +541,17 @@ namespace DMSDatasetRetriever
                                 continue;
                             }
 
-                            var fileChecksumInfo = GetFileChecksumInfo(item.Value, dataFile);
+                            var fileChecksumInfo = GetFileChecksumInfo(item.Value, dataFile, baseOutputDirectoryPath);
                             var md5Base64 = GetBase64MD5(fileChecksumInfo);
 
                             AppendUploadCommand(writer, processedFiles, dataFile, md5Base64);
                         }
 
-                        AppendTextFilesToBatchFile(writer, processedFiles, item.Value.DataFileDirectory);
+                        AppendTextFilesToBatchFile(writer, processedFiles, item.Value.ChecksumFileDirectory);
 
                         if (Options.ParentDirectoryDepth > 0)
                         {
-                            var parentDirectory = item.Value.DataFileDirectory.Parent;
+                            var parentDirectory = item.Value.ChecksumFileDirectory.Parent;
                             for (var i = 2; i <= Options.ParentDirectoryDepth; i++)
                             {
                                 if (parentDirectory == null)
@@ -611,31 +648,60 @@ namespace DMSDatasetRetriever
 
         private ChecksumFileUpdater GetChecksumUpdater(
             IDictionary<string, ChecksumFileUpdater> checksumData,
-            DirectoryInfo targetDirectory)
+            DirectoryInfo checksumFileDirectory,
+            string baseOutputDirectoryPath)
         {
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (checksumData.TryGetValue(targetDirectory.FullName, out var checksumFileUpdater))
+            if (checksumData.TryGetValue(checksumFileDirectory.FullName, out var checksumFileUpdater))
             {
                 return checksumFileUpdater;
             }
 
-            var newUpdater = new ChecksumFileUpdater(targetDirectory, Options.ChecksumFileMode);
-            checksumData.Add(targetDirectory.FullName, newUpdater);
+            var newUpdater = new ChecksumFileUpdater(checksumFileDirectory, Options.ChecksumFileMode, baseOutputDirectoryPath, Options.ChecksumFileNameDate);
+            checksumData.Add(checksumFileDirectory.FullName, newUpdater);
 
             return newUpdater;
         }
 
-        private FileChecksumInfo GetFileChecksumInfo(ChecksumFileUpdater checksumFileUpdater, FileSystemInfo dataFile)
+        private FileChecksumInfo GetFileChecksumInfo(
+            ChecksumFileUpdater checksumFileUpdater,
+            FileSystemInfo dataFile,
+            string baseOutputDirectoryPath)
         {
-            var datasetFileName = Path.GetFileName(GetPathWithoutLinkFileSuffix(dataFile));
+            var datasetFilePath = GetPathWithoutLinkFileSuffix(dataFile);
 
-            if (checksumFileUpdater.DataFileChecksums.TryGetValue(datasetFileName, out var fileChecksumInfo))
+            // First look for a match on filename alone
+            if (checksumFileUpdater.DataFileChecksums.TryGetValue(Path.GetFileName(datasetFilePath), out var fileChecksumInfo))
             {
                 return fileChecksumInfo;
             }
 
-            var newChecksumInfo = new FileChecksumInfo(datasetFileName);
-            checksumFileUpdater.DataFileChecksums.Add(datasetFileName, newChecksumInfo);
+            string relativeFilePath;
+            if (dataFile.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
+            {
+                var baseOutputDirectoryName = Path.GetFileName(baseOutputDirectoryPath);
+
+                // Look for the relative path of the file
+                relativeFilePath = Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(baseOutputDirectoryPath.Length).TrimStart('\\'));
+
+                if (checksumFileUpdater.DataFileChecksums.TryGetValue(relativeFilePath, out var fileChecksumInfo2))
+                {
+                    return fileChecksumInfo2;
+                }
+
+                // Try Linux-style directory separators
+                if (checksumFileUpdater.DataFileChecksums.TryGetValue(ChecksumFileUpdater.UpdatePathSeparators(relativeFilePath), out var fileChecksumInfo3))
+                {
+                    return fileChecksumInfo3;
+                }
+            }
+            else
+            {
+                relativeFilePath = Path.GetFileName(datasetFilePath);
+            }
+
+            var newChecksumInfo = new FileChecksumInfo(relativeFilePath);
+            checksumFileUpdater.DataFileChecksums.Add(relativeFilePath, newChecksumInfo);
 
             return newChecksumInfo;
         }

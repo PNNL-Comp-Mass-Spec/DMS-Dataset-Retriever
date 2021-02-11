@@ -130,7 +130,12 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList)
+        /// <summary>
+        /// Create one or more checksum files (depending on Options.ChecksumFileMode)
+        /// </summary>
+        /// <param name="datasetList"></param>
+        /// <param name="outputDirectory"></param>
+        private bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList, FileSystemInfo outputDirectory)
         {
             try
             {
@@ -146,7 +151,7 @@ namespace DMSDatasetRetriever
                 fileHashUtility.ProgressUpdate += FileHashUtilityOnProgressUpdate;
                 fileHashUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                var success = fileHashUtility.CreateChecksumFiles(datasetList);
+                var success = fileHashUtility.CreateChecksumFiles(datasetList, outputDirectory.FullName);
                 return success;
             }
             catch (Exception ex)
@@ -829,7 +834,7 @@ namespace DMSDatasetRetriever
                 if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
                     return true;
 
-                var checksumSuccess = CreateChecksumFiles(datasetList);
+                var checksumSuccess = CreateChecksumFiles(datasetList, outputDirectory);
 
                 return checksumSuccess;
             }

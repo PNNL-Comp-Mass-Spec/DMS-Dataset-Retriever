@@ -51,20 +51,30 @@ namespace DMSDatasetRetriever
         #region "Properties"
 
         /// <summary>
+        /// Base output directory (used when checksumFileMode is ChecksumFileType.MoTrPAC)
+        /// </summary>
+        public string BaseOutputDirectoryPath { get; }
+
+        /// <summary>
         /// Checksum file mode
         /// </summary>
         public DatasetRetrieverOptions.ChecksumFileType ChecksumFileMode { get; }
 
         /// <summary>
+        /// Date to use when generating the timestamp for the checksum file (used when checksumFileMode is ChecksumFileType.MoTrPAC)
+        /// </summary>
+        public DateTime ChecksumFileNameDate { get; }
+
+        /// <summary>
         /// Checksum file path
         /// </summary>
-        /// <remarks>auto determined using ChecksumFileMode and DataFileDirectory</remarks>
+        /// <remarks>Auto determined using ChecksumFileMode and ChecksumFileDirectory</remarks>
         public string ChecksumFilePath { get; }
 
         /// <summary>
-        /// Data file directory
+        /// Checksum file directory
         /// </summary>
-        public DirectoryInfo DataFileDirectory { get; }
+        public DirectoryInfo ChecksumFileDirectory { get; }
 
         /// <summary>
         /// Files in the data file directory
@@ -73,7 +83,7 @@ namespace DMSDatasetRetriever
 
         /// <summary>
         /// Information on each file, including MD5 and SHA-1 checksums, plus the file size
-        /// Keys are the file name, Values are the checksum details
+        /// Keys are the file name (or relative file path), Values are the checksum details
         /// </summary>
         public Dictionary<string, FileChecksumInfo> DataFileChecksums { get; }
 
@@ -82,15 +92,27 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dataFileDirectory">Data file directory</param>
+        /// <param name="checksumFileDirectory">Directory where the checksum file resides</param>
         /// <param name="checksumFileMode">Checksum mode</param>
-        public ChecksumFileUpdater(DirectoryInfo dataFileDirectory, DatasetRetrieverOptions.ChecksumFileType checksumFileMode)
+        /// <param name="baseOutputDirectoryPath">
+        /// Base output directory (used when checksumFileMode is ChecksumFileType.MoTrPAC)
+        /// </param>
+        /// <param name="checksumFileNameDate">
+        /// Date to use when generating the timestamp for the checksum file (used when checksumFileMode is ChecksumFileType.MoTrPAC)
+        /// </param>
+        public ChecksumFileUpdater(
+            DirectoryInfo checksumFileDirectory,
+            DatasetRetrieverOptions.ChecksumFileType checksumFileMode,
+            string baseOutputDirectoryPath,
+            DateTime checksumFileNameDate)
         {
             ChecksumFileMode = checksumFileMode;
-            DataFileDirectory = dataFileDirectory;
+            ChecksumFileDirectory = checksumFileDirectory;
             DataFiles = new List<FileInfo>();
             DataFileChecksums = new Dictionary<string, FileChecksumInfo>(StringComparer.OrdinalIgnoreCase);
 
+            BaseOutputDirectoryPath = baseOutputDirectoryPath;
+            ChecksumFileNameDate = checksumFileNameDate;
             ChecksumFilePath = GetChecksumFilePath();
         }
 
@@ -111,13 +133,35 @@ namespace DMSDatasetRetriever
                     return string.Empty;
 
                 case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
-                    if (DataFileDirectory.Parent == null)
-                        throw new DirectoryNotFoundException("Unable to determine the parent directory of " + DataFileDirectory.FullName);
+                    if (ChecksumFileDirectory.Parent == null)
+                        throw new DirectoryNotFoundException("Unable to determine the parent directory of " + ChecksumFileDirectory.FullName);
 
-                    return Path.Combine(DataFileDirectory.Parent.FullName, DataFileDirectory.Name + ".cksum");
+                    return Path.Combine(ChecksumFileDirectory.Parent.FullName, ChecksumFileDirectory.Name + ".cksum");
 
                 case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
-                    return Path.Combine(DataFileDirectory.FullName, DataFileDirectory.Name + "_MANIFEST.txt");
+                    // Behavior in 2020 was to create a separate manifest file in each data file directory
+                    // return Path.Combine(DataFileDirectory.FullName, DataFileDirectory.Name + "_MANIFEST.txt");
+
+                    // New behavior in 2021 is to create a single manifest file in the base output directory
+
+                    string baseOutputDirectoryPath;
+                    if (string.IsNullOrWhiteSpace(BaseOutputDirectoryPath))
+                    {
+                        if (ChecksumFileDirectory.Parent == null)
+                            throw new DirectoryNotFoundException("Unable to determine the parent directory of " + ChecksumFileDirectory.FullName);
+
+                        baseOutputDirectoryPath = ChecksumFileDirectory.Parent.FullName;
+                    }
+                    else
+                    {
+                        baseOutputDirectoryPath = BaseOutputDirectoryPath;
+                    }
+
+                    var checksumFileNameDate = ChecksumFileNameDate == DateTime.MinValue ? DateTime.Now : ChecksumFileNameDate;
+
+                    var checksumFileName = string.Format("file_manifest_{0:yyyyMMdd}.csv", checksumFileNameDate);
+
+                    return Path.Combine(baseOutputDirectoryPath, checksumFileName);
 
                 default:
                     throw new Exception("Unrecognized enum value: " + ChecksumFileMode);
@@ -161,34 +205,105 @@ namespace DMSDatasetRetriever
 
                     OnWarningEvent(string.Format(
                         "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
-                        DataFileDirectory.FullName, ChecksumFileMode));
+                        ChecksumFileDirectory.FullName, ChecksumFileMode));
                     return;
                 }
 
-                var checksumFile = new FileInfo(ChecksumFilePath);
-                if (!checksumFile.Exists)
+                var defaultChecksumFile = new FileInfo(ChecksumFilePath);
+                if (defaultChecksumFile.Directory == null)
                 {
+                    OnWarningEvent(string.Format(
+                        "Unable to determine the parent directory of the default checksum file: {0}",
+                        ChecksumFilePath));
                     return;
                 }
 
-                OnDebugEvent("Loading existing checksum file: " + PathUtils.CompactPathString(ChecksumFilePath, 100));
+                // Keys in this list are directory paths
+                // Values are checksum filename, optionally with a wildcard
+                var directoriesToCheck = new List<DirectoryInfo>
+                {
+                    defaultChecksumFile.Directory,
+                    new DirectoryInfo(BaseOutputDirectoryPath)
+                };
+
+                var checksumFileNames = new List<string>();
+
+                // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                switch (ChecksumFileMode)
+                {
+                    case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
+                        checksumFileNames.Add("*.cksum");
+                        break;
+
+                    case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
+                        checksumFileNames.Add("*_manifest_*.csv");
+                        checksumFileNames.Add("*_MANIFEST.txt");
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                FileInfo checksumFile = null;
+
+                foreach (var directory in directoriesToCheck.Where(directory => directory.Exists))
+                {
+                    var candidateChecksumFile = new FileInfo(Path.Combine(directory.FullName, defaultChecksumFile.Name));
+                    if (candidateChecksumFile.Exists && candidateChecksumFile.Length > 0)
+                    {
+                        checksumFile = defaultChecksumFile;
+                        break;
+                    }
+
+                    foreach (var fileSpec in checksumFileNames)
+                    {
+                        var checksumFiles = directory.GetFiles(fileSpec).ToList();
+
+                        foreach (var item in checksumFiles.Where(item => item.Length > 0))
+                        {
+                            checksumFile = item;
+                            break;
+                        }
+
+                        if (checksumFile != null)
+                            break;
+                    }
+
+                    if (checksumFile != null)
+                        break;
+                }
+
+                if (checksumFile == null)
+                {
+                    OnWarningEvent(string.Format(
+                        "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
+                        ChecksumFileDirectory.FullName, ChecksumFileMode));
+
+                    return;
+                }
+
+                OnDebugEvent("Loading existing checksum file: " + PathUtils.CompactPathString(checksumFile.FullName, 100));
 
                 var columnMap = new Dictionary<ChecksumFileColumns, int>();
                 var columnNamesByIdentifier = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
+                char columnDelimiter;
 
                 if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.CPTAC)
                 {
                     columnMap.Add(ChecksumFileColumns.SHA1, 0);
                     columnMap.Add(ChecksumFileColumns.Filename, 1);
+                    columnDelimiter = '\t';
                 }
                 else
                 {
-                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Filename, "raw_file");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Filename, "file_name", "raw_file");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Fraction, "fraction");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.TechnicalReplicate, "technical_replicate");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Comment, "tech_rep_comment");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.MD5, "md5");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.SHA1, "sha1");
+
+                    columnDelimiter = checksumFile.Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
                 }
 
                 using (var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -202,21 +317,24 @@ namespace DMSDatasetRetriever
 
                         linesRead++;
 
+                        var lineParts = dataLine.Split(columnDelimiter).ToList();
+
                         if (linesRead == 1 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
                         {
                             // Parse the header line
-                            var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, columnNamesByIdentifier);
+                            var headerLine = string.Join("\t", lineParts);
+
+                            var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
                             if (!validHeaders)
                             {
                                 OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
                                 var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
                                 OnDebugEvent("Supported headers are: " + defaultHeaderNames);
+                                break;
                             }
 
                             continue;
                         }
-
-                        var lineParts = dataLine.Split('\t').ToList();
 
                         switch (ChecksumFileMode)
                         {
@@ -252,10 +370,11 @@ namespace DMSDatasetRetriever
             {
                 OnDebugEvent(string.Format(
                     "Checksum file has multiple entries; skipping duplicate file {0} in directory {1}",
-                    cleanFileName, DataFileDirectory.FullName));
+                    cleanFileName, ChecksumFileDirectory.FullName));
             }
 
-            var fileChecksumInfo = new FileChecksumInfo(cleanFileName) {
+            var fileChecksumInfo = new FileChecksumInfo(cleanFileName)
+            {
                 SHA1 = sha1
             };
 
@@ -264,33 +383,41 @@ namespace DMSDatasetRetriever
 
         private void ParseChecksumFileLineMoTrPAC(IReadOnlyDictionary<ChecksumFileColumns, int> columnMap, IReadOnlyList<string> lineParts)
         {
-            var fileName = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename);
-            var fraction = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Fraction);
-            if (!int.TryParse(fraction, out var fractionNumber))
-            {
-                fractionNumber = 0;
-                OnDebugEvent(string.Format(
-                    "The fraction number for file {0} in directory {1} is not numeric; will store 0",
-                    fileName, DataFileDirectory.Name));
-            }
-
-            var technicalReplicateFlag = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.TechnicalReplicate);
-            var comment = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Comment);
+            var relativeFilePath = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename);
             var md5 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.MD5);
             var sha1 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.SHA1);
 
-            var isTechnicalReplicate = technicalReplicateFlag.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
-                                       technicalReplicateFlag.Equals("true", StringComparison.OrdinalIgnoreCase);
+            if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC &&
+                BaseOutputDirectoryPath.Length > 0 &&
+                relativeFilePath.IndexOf("/", StringComparison.Ordinal) < 0)
+            {
+                // relativeFilePath only has a filename and not a Linux-style relative path
+                var nameToFind = Path.GetFileName(relativeFilePath);
+                var baseOutputDirectoryName = Path.GetFileName(BaseOutputDirectoryPath);
 
-            if (DataFileChecksums.ContainsKey(fileName))
+                // Look for a match to the filename in DataFiles
+                foreach (var dataFile in DataFiles.Where(dataFile => dataFile.Name.Equals(nameToFind)))
+                {
+                    if (dataFile.FullName.StartsWith(BaseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        relativeFilePath = Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(BaseOutputDirectoryPath.Length).Trim('\\'));
+                    }
+
+                    break;
+                }
+            }
+
+            relativeFilePath = UpdatePathSeparators(relativeFilePath);
+
+            if (DataFileChecksums.ContainsKey(relativeFilePath))
             {
                 OnDebugEvent(string.Format(
                     "Checksum file has multiple entries; skipping duplicate file {0} in directory {1}",
-                    fileName, DataFileDirectory.FullName));
+                    relativeFilePath, ChecksumFileDirectory.FullName));
                 return;
             }
 
-            var fileChecksumInfo = new FileChecksumInfo(fileName)
+            var fileChecksumInfo = new FileChecksumInfo(relativeFilePath)
             {
                 Fraction = fractionNumber,
                 IsTechnicalReplicate = isTechnicalReplicate,
@@ -300,17 +427,26 @@ namespace DMSDatasetRetriever
             };
 
             if (technicalReplicateFlag.Equals("no") && comment.Equals("no"))
+
+        /// <summary>
+        /// Assure that directory separators in filePath are \ or /, depending on useLinuxSlashes
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="useLinuxSlashes">When true, use / for directory separators; otherwise use \</param>
+        public static string UpdatePathSeparators(string filePath, bool useLinuxSlashes = true)
+        {
+            if (useLinuxSlashes)
             {
-                // Fix typo in _Manifest.txt files
-                fileChecksumInfo.Comment = string.Empty;
+                return filePath.Replace('\\', '/');
             }
 
-            DataFileChecksums.Add(fileName, fileChecksumInfo);
+            return filePath.Replace('/', '\\');
         }
 
         /// <summary>
         /// Create or update the checksum file
         /// </summary>
+        /// <returns>True if success, false if an error</returns>
         public bool WriteChecksumFile()
         {
             try
@@ -328,7 +464,7 @@ namespace DMSDatasetRetriever
 
                     OnWarningEvent(string.Format(
                         "Checksum file name could not be determined for {0} in WriteChecksumFile; ChecksumFileMode is {1}",
-                        DataFileDirectory.FullName, ChecksumFileMode));
+                        ChecksumFileDirectory.FullName, ChecksumFileMode));
                     return false;
                 }
 
@@ -368,15 +504,15 @@ namespace DMSDatasetRetriever
                 case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
                     var columnNames = new List<string>
                     {
-                        "raw_file",
                         "fraction",
                         "technical_replicate",
                         "tech_rep_comment",
+                        "file_name",
                         "md5",
                         "sha1"
                     };
 
-                    writer.WriteLine(string.Join("\t", columnNames));
+                    writer.WriteLine(string.Join(",", columnNames));
                     return;
 
                 case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
@@ -389,26 +525,53 @@ namespace DMSDatasetRetriever
         {
             var dataFileInfo = dataFile.Value;
 
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (ChecksumFileMode)
             {
                 case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
+                    string relativeFilePath;
+                    if (dataFileInfo.FilePath.Contains('/'))
+                    {
+                        // We already have a Linux-style relative file path; use as-is
+                        relativeFilePath = dataFileInfo.FilePath;
+                    }
+                    else if (string.IsNullOrWhiteSpace(BaseOutputDirectoryPath) || !dataFileInfo.FilePath.StartsWith(BaseOutputDirectoryPath))
+                    {
+                        relativeFilePath = dataFileInfo.FileName;
+                    }
+                    else
+                    {
+                        relativeFilePath = dataFileInfo.FilePath.Substring(BaseOutputDirectoryPath.Length);
+                    }
+
                     var dataValues = new List<string>
                     {
-                        dataFileInfo.FileName,
                         dataFileInfo.Fraction.ToString(),
                         dataFileInfo.IsTechnicalReplicate ? "yes" : "no",
                         dataFileInfo.Comment,
+                        relativeFilePath,
                         dataFileInfo.MD5,
                         dataFileInfo.SHA1
                     };
 
-                    writer.WriteLine(string.Join("\t", dataValues));
+                    writer.WriteLine(string.Join(",", dataValues));
                     return;
 
                 case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
                     writer.WriteLine("{0}\t*{1}", dataFileInfo.SHA1, dataFileInfo.FileName);
                     return;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
+        }
+
+        /// <summary>
+        /// Show the checksum file path
+        /// </summary>
+        public override string ToString()
+        {
+            return PathUtils.CompactPathString(ChecksumFilePath);
         }
     }
 }
