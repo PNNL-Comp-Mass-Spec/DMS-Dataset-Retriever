@@ -24,19 +24,22 @@ namespace DMSDatasetRetriever
         /// Fraction number
         /// </summary>
         /// <remarks>Only present in MoTrPAC manifest files</remarks>
+        [Obsolete("No longer used")]
         public int Fraction { get; set; }
 
         /// <summary>
         /// True if this is a technical replicate
         /// </summary>
         /// <remarks>Only present in MoTrPAC manifest files</remarks>
+        [Obsolete("No longer used")]
         public bool IsTechnicalReplicate { get; set; }
 
         /// <summary>
         /// File comment
         /// </summary>
         /// <remarks>Only present in MoTrPAC manifest files</remarks>
-        public string Comment { get; set; }
+        [Obsolete("No longer used")]
+        public string Comment { get; set; } = string.Empty;
 
         /// <summary>
         /// MD5 hash of the file
@@ -66,10 +69,6 @@ namespace DMSDatasetRetriever
             MD5 = string.Empty;
             MD5_Base64 = string.Empty;
             SHA1 = string.Empty;
-
-            Fraction = 0;
-            IsTechnicalReplicate = false;
-            Comment = string.Empty;
         }
 
         /// <summary>

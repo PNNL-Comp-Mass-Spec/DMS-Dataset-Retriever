@@ -33,18 +33,21 @@ namespace DMSDatasetRetriever
             /// Fraction number (integer)
             /// </summary>
             /// <remarks>Only present in MoTrPAC manifest files</remarks>
+            [Obsolete("No longer used")]
             Fraction = 3,
 
             /// <summary>
             /// Technical replicate flag (yes or no)
             /// </summary>
             /// <remarks>Only present in MoTrPAC manifest files (column technical_replicate)</remarks>
+            [Obsolete("No longer used")]
             TechnicalReplicate = 4,
 
             /// <summary>
             /// File comment
             /// </summary>
             /// <remarks>Only present in MoTrPAC manifest files (column tech_rep_comment)</remarks>
+            [Obsolete("No longer used")]
             Comment = 5
         }
 
@@ -181,9 +184,6 @@ namespace DMSDatasetRetriever
             if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
             {
                 columnIdentifierList.Add(ChecksumFileColumns.Filename);
-                columnIdentifierList.Add(ChecksumFileColumns.Fraction);
-                columnIdentifierList.Add(ChecksumFileColumns.TechnicalReplicate);
-                columnIdentifierList.Add(ChecksumFileColumns.Comment);
                 columnIdentifierList.Add(ChecksumFileColumns.MD5);
                 columnIdentifierList.Add(ChecksumFileColumns.SHA1);
             }
@@ -297,11 +297,15 @@ namespace DMSDatasetRetriever
                 else
                 {
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Filename, "file_name", "raw_file");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.MD5, "md5");
+                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.SHA1, "sha1");
+
+                    // Legacy columns
+#pragma warning disable 618
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Fraction, "fraction");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.TechnicalReplicate, "technical_replicate");
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Comment, "tech_rep_comment");
-                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.MD5, "md5");
-                    DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.SHA1, "sha1");
+#pragma warning restore 618
 
                     columnDelimiter = checksumFile.Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
                 }
@@ -419,14 +423,12 @@ namespace DMSDatasetRetriever
 
             var fileChecksumInfo = new FileChecksumInfo(relativeFilePath)
             {
-                Fraction = fractionNumber,
-                IsTechnicalReplicate = isTechnicalReplicate,
-                Comment = comment,
                 MD5 = md5,
                 SHA1 = sha1
             };
 
-            if (technicalReplicateFlag.Equals("no") && comment.Equals("no"))
+            DataFileChecksums.Add(relativeFilePath, fileChecksumInfo);
+        }
 
         /// <summary>
         /// Assure that directory separators in filePath are \ or /, depending on useLinuxSlashes
@@ -504,9 +506,6 @@ namespace DMSDatasetRetriever
                 case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
                     var columnNames = new List<string>
                     {
-                        "fraction",
-                        "technical_replicate",
-                        "tech_rep_comment",
                         "file_name",
                         "md5",
                         "sha1"
@@ -546,9 +545,6 @@ namespace DMSDatasetRetriever
 
                     var dataValues = new List<string>
                     {
-                        dataFileInfo.Fraction.ToString(),
-                        dataFileInfo.IsTechnicalReplicate ? "yes" : "no",
-                        dataFileInfo.Comment,
                         relativeFilePath,
                         dataFileInfo.MD5,
                         dataFileInfo.SHA1
