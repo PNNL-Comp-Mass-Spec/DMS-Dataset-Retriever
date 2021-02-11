@@ -135,7 +135,7 @@ namespace DMSDatasetRetriever
         /// </summary>
         [Option("ParentDirectoryDepth", "ParentDepth", HelpShowsDefault = false,
             HelpText = "When creating the batch file with upload commands, " +
-                       "look for additional text files in directories below the parent directory (if ParentDirectoryDepth=1) " +
+                       "look for additional text files\nin directories below the parent directory (if ParentDirectoryDepth=1)\n" +
                        "or below the parent of the parent directory (if ParentDirectoryDepth=2)")]
         public int ParentDirectoryDepth { get; set; } = 2;
 
@@ -147,8 +147,8 @@ namespace DMSDatasetRetriever
         public bool PreviewMode { get; set; }
 
         [Option("RemoteUploadBaseURL", "RemoteUploadURL", "RemoteURL", HelpShowsDefault = false,
-            HelpText = "Remote upload base URL to use when creating the batch file with upload commands (MoTrPAC only); " +
-                       "defaults to the MoTrPAC Google cloud bucket. " +
+            HelpText = "Remote upload base URL to use when creating the batch file with upload commands (MoTrPAC only);\n" +
+                       "defaults to the MoTrPAC Google cloud bucket.\n" +
                        "Local data files must be organized in a hierarchy that matches the directory names in this URL")]
         // ReSharper disable once StringLiteralTypo
         public string RemoteUploadBaseURL { get; set; } = "gs://motrpac-portal-transfer-pnnl/PASS1B-06/T70/";
@@ -158,8 +158,8 @@ namespace DMSDatasetRetriever
         /// </summary>
         [Option("RemoteUploadBatchFilePath", "RemoteUploadBatchFile", "BatchFilePath", HelpShowsDefault = false,
             HelpText = "Path to the directory in which to create the upload batch file " +
-                       "(default name UploadFiles_yyyy-MM-dd.bat); alternatively, the name (or full path) " +
-                       "of the batch file to create (the name must end in '.bat')")]
+                       "(default name UploadFiles_yyyy-MM-dd.bat);\n" +
+                       "alternatively, the name (or full path) of the batch file to create (the name must end in '.bat')")]
         public string RemoteUploadBatchFilePath { get; set; } = string.Empty;
 
         /// <summary>
@@ -167,11 +167,11 @@ namespace DMSDatasetRetriever
         /// </summary>
         [Option("UseDatasetLinkFiles", "UseLinkFiles", "CreateLinks", "MakeLinks", HelpShowsDefault = false,
             HelpText = "When true, for each remote dataset file, " +
-                       "create a local text file that contains the remote file path. " +
+                       "create a local text file that contains the remote file path.\n" +
                        "This saves time and disk space by not copying the file locally, " +
-                       "but checksum speeds will be slower (due to reading data over the network). " +
+                       "but checksum speeds will be slower (due to reading data over the network).\n" +
                        "Also, when the upload occurs, the data will have to be read from the storage server, " +
-                       "then pushed to the remote server, leading to more network traffic. " +
+                       "then pushed to the remote server, leading to more network traffic.\n" +
                        // ReSharper disable once StringLiteralTypo
                        "Link files have extension .dslink")]
         public bool UseDatasetLinkFiles { get; set; } = false;
