@@ -774,10 +774,8 @@ namespace DMSDatasetRetriever
             string relativeFilePath;
             if (dataFile.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
             {
-                var baseOutputDirectoryName = Path.GetFileName(baseOutputDirectoryPath);
-
+                relativeFilePath = GetRelativeFilePath(dataFile, baseOutputDirectoryPath);
                 // Look for the relative path of the file
-                relativeFilePath = Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(baseOutputDirectoryPath.Length).TrimStart('\\'));
 
                 if (checksumFileUpdater.DataFileChecksums.TryGetValue(relativeFilePath, out var fileChecksumInfo2))
                 {
@@ -829,6 +827,15 @@ namespace DMSDatasetRetriever
                 return datasetFile.FullName.Substring(0, datasetFile.FullName.Length - FileCopyUtility.LINK_FILE_SUFFIX.Length);
 
             return datasetFile.FullName;
+        }
+
+        private string GetRelativeFilePath(FileSystemInfo dataFile, string baseOutputDirectoryPath)
+        {
+            var baseOutputDirectoryName = Path.GetFileName(baseOutputDirectoryPath);
+
+            // Look for the relative path of the file
+            var relativeFilePath = Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(baseOutputDirectoryPath.Length).TrimStart('\\'));
+            return relativeFilePath;
         }
 
         private string GetRemotePathFromLinkFile(FileSystemInfo linkFile)
