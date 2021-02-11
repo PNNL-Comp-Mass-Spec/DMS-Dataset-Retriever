@@ -6,5 +6,5 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:DMSDatasetRetriever.DMSDatasetRetriever.GetDatasetFileHashInfo(PRISMDatabaseUtils.IDBTools,System.Collections.Generic.IReadOnlyCollection{DMSDatasetRetriever.DatasetInfo})~System.Boolean")]
-[assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:DMSDatasetRetriever.FileHashUtility.CreateChecksumFiles(System.Collections.Generic.IEnumerable{DMSDatasetRetriever.DatasetInfo})~System.Boolean")]
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:DMSDatasetRetriever.DMSDatasetRetriever.GetDatasetFolderPathInfo(PRISMDatabaseUtils.IDBTools,System.Collections.Generic.IEnumerable{DMSDatasetRetriever.DatasetInfo})~System.Boolean")]
+[assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "member", Target = "~M:DMSDatasetRetriever.FileHashUtility.CreateChecksumFiles(System.Collections.Generic.IEnumerable{DMSDatasetRetriever.DatasetInfo},System.String)~System.Boolean")]
