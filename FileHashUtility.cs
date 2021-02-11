@@ -69,6 +69,35 @@ namespace DMSDatasetRetriever
             RemoteUploadURLDirectoriesToMatch = string.Join(Path.DirectorySeparatorChar.ToString(), uploadUrlDirectories) + Path.DirectorySeparatorChar;
         }
 
+        private void AlignUploadCommands(IList<string> uploadCommands)
+        {
+            var largestIndex = 0;
+            foreach (var item in uploadCommands)
+            {
+                var gsIndex = item.IndexOf(Options.RemoteUploadBaseURL, StringComparison.Ordinal);
+                if (gsIndex > largestIndex)
+                    largestIndex = gsIndex;
+            }
+
+            if (largestIndex <= 0)
+                return;
+
+            // Create a format string similar to {0,-245}{1}
+            var formatString = "{0,-" + largestIndex + "}{1}";
+
+            for (var i = 0; i < uploadCommands.Count; i++)
+            {
+                var gsIndex = uploadCommands[i].IndexOf(Options.RemoteUploadBaseURL, StringComparison.Ordinal);
+                if (gsIndex < 0)
+                    continue;
+
+                var leftHalf = uploadCommands[i].Substring(0, gsIndex);
+                var rightHalf = uploadCommands[i].Substring(gsIndex);
+
+                uploadCommands[i] = string.Format(formatString, leftHalf, rightHalf);
+            }
+        }
+
         /// <summary>
         /// Look for any text files in the specified directory, recursively searching subdirectories
         /// For any not present in processedFiles, append upload commands to the batch file
@@ -590,6 +619,8 @@ namespace DMSDatasetRetriever
                         new DirectoryInfo(parentDirectory));
                 }
 
+                // Format the commands to align on gs://
+                AlignUploadCommands(uploadCommands);
 
                 using (var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
