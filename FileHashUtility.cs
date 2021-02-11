@@ -100,18 +100,27 @@ namespace DMSDatasetRetriever
 
         /// <summary>
         /// Look for any text files in the specified directory, recursively searching subdirectories
-        /// For any not present in processedFiles, append upload commands to the batch file
+        /// For any not present in processedFiles, append upload commands to the batch file and to the checksum file
         /// </summary>
-        /// <param name="writer">Writer</param>
+        /// <param name="checksumFilePath">Checksum file path (only used if ChecksumFileMode is MoTrPAC</param>
+        /// <param name="baseOutputDirectoryPath">Base output directory path</param>
+        /// <param name="uploadCommands">List of commands for the batch file</param>
         /// <param name="processedFiles">List of processed files</param>
         /// <param name="directory">Directory</param>
-        private void AppendTextFilesToBatchFile(TextWriter writer, ISet<string> processedFiles, DirectoryInfo directory)
+        private void AppendTextFilesToOutputFiles(
+            string checksumFilePath,
+            string baseOutputDirectoryPath,
+            ICollection<string> uploadCommands,
+            ISet<string> processedFiles,
+            DirectoryInfo directory)
         {
             var textFiles = directory.GetFiles("*.txt", SearchOption.AllDirectories).ToList();
             if (textFiles.Count == 0)
             {
                 return;
             }
+
+            var newFiles = new List<FileInfo>();
 
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var dataFile in textFiles)
@@ -122,6 +131,37 @@ namespace DMSDatasetRetriever
                 }
 
                 AppendUploadCommand(uploadCommands, processedFiles, dataFile);
+                newFiles.Add(dataFile);
+            }
+
+            if (string.IsNullOrWhiteSpace(checksumFilePath) || Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                return;
+
+            // Also append the text files to the checksum file
+            using (var writer = new StreamWriter(new FileStream(checksumFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+            {
+                var dataValues = new List<string>();
+                foreach (var item in newFiles)
+                {
+                    string relativeFilePath;
+                    if (item.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        relativeFilePath = GetRelativeFilePath(item, baseOutputDirectoryPath);
+                    }
+                    else
+                    {
+                        relativeFilePath = item.Name;
+                    }
+
+                    var md5Sum = ComputeChecksumMD5(item, out _);
+                    var sha1Sum = ComputeChecksumSHA1(item);
+
+                    dataValues.Clear();
+                    dataValues.Add(ChecksumFileUpdater.UpdatePathSeparators(relativeFilePath));
+                    dataValues.Add(md5Sum);
+                    dataValues.Add(sha1Sum);
+                    writer.WriteLine(string.Join(",", dataValues));
+                }
             }
         }
 

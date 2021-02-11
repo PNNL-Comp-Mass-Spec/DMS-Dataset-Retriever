@@ -128,7 +128,11 @@ namespace DMSDatasetRetriever
             DataFiles.Add(dataFile);
         }
 
-        private string GetChecksumFilePath()
+        /// <summary>
+        /// Get the checksum file path
+        /// </summary>
+        /// <returns>Checksum file path, or an empty string</returns>
+        public string GetChecksumFilePath()
         {
             switch (ChecksumFileMode)
             {
