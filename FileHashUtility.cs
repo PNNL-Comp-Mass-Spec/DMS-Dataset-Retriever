@@ -92,11 +92,11 @@ namespace DMSDatasetRetriever
                     continue;
                 }
 
-                AppendUploadCommand(writer, processedFiles, dataFile);
+                AppendUploadCommand(uploadCommands, processedFiles, dataFile);
             }
         }
 
-        private void AppendUploadCommand(TextWriter writer, ISet<string> processedFiles, FileInfo dataFile, string md5Base64 = "")
+        private void AppendUploadCommand(ICollection<string> uploadCommands, ISet<string> processedFiles, FileInfo dataFile, string md5Base64 = "")
         {
             var remoteUrl = GenerateRemoteUrl(dataFile.FullName);
 
@@ -122,7 +122,7 @@ namespace DMSDatasetRetriever
                 uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsutilCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
             }
 
-            writer.WriteLine(uploadCommand);
+            uploadCommands.Add(uploadCommand);
             processedFiles.Add(dataFile.FullName);
         }
 
@@ -462,6 +462,7 @@ namespace DMSDatasetRetriever
                     {
                         OnStatusEvent("Creating default-named batch file in the OutputDirectoryPath: " + Options.OutputDirectoryPath);
                     }
+
                     uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, batchFileName);
                 }
                 else if (Path.IsPathRooted(Options.RemoteUploadBatchFilePath))
@@ -490,6 +491,7 @@ namespace DMSDatasetRetriever
                                 "RemoteUploadBatchFilePath is not rooted; appending file {0} to {1}",
                                 Options.RemoteUploadBatchFilePath, Options.OutputDirectoryPath));
                         }
+
                         uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, Options.RemoteUploadBatchFilePath);
                     }
                     else
@@ -502,6 +504,7 @@ namespace DMSDatasetRetriever
                                 "RemoteUploadBatchFilePath is not rooted; appending file {0} to {1}",
                                 batchFileName, targetDirectoryPath));
                         }
+
                         uploadBatchFilePath = Path.Combine(targetDirectoryPath, batchFileName);
                     }
                 }
@@ -529,50 +532,70 @@ namespace DMSDatasetRetriever
                 // The number of levels up is defined in Options
                 var parentDirectoryPaths = new SortedSet<string>();
 
-                using (var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                // Use a list to cache the data that will be written to the batch file
+                // Once the list is complete, create/update the batch file
+                var uploadCommands = new List<string>();
+                var checksumFilePath = string.Empty;
+
+                foreach (var item in checksumData)
                 {
-                    foreach (var item in checksumData)
+                    var checksumFileUpdater = item.Value;
+
+                    foreach (var dataFile in checksumFileUpdater.DataFiles)
                     {
-                        foreach (var dataFile in item.Value.DataFiles)
+                        if (processedFiles.Contains(dataFile.FullName))
                         {
-                            if (processedFiles.Contains(dataFile.FullName))
-                            {
-                                OnWarningEvent("Duplicate file found; skipping " + dataFile.FullName);
-                                continue;
-                            }
-
-                            var fileChecksumInfo = GetFileChecksumInfo(item.Value, dataFile, baseOutputDirectoryPath);
-                            var md5Base64 = GetBase64MD5(fileChecksumInfo);
-
-                            AppendUploadCommand(writer, processedFiles, dataFile, md5Base64);
+                            OnWarningEvent("Duplicate file found; skipping " + dataFile.FullName);
+                            continue;
                         }
 
-                        AppendTextFilesToBatchFile(writer, processedFiles, item.Value.ChecksumFileDirectory);
+                        var fileChecksumInfo = GetFileChecksumInfo(checksumFileUpdater, dataFile, baseOutputDirectoryPath);
+                        var md5Base64 = GetBase64MD5(fileChecksumInfo);
 
-                        if (Options.ParentDirectoryDepth > 0)
-                        {
-                            var parentDirectory = item.Value.ChecksumFileDirectory.Parent;
-                            for (var i = 2; i <= Options.ParentDirectoryDepth; i++)
-                            {
-                                if (parentDirectory == null)
-                                    break;
-
-                                parentDirectory = parentDirectory.Parent;
-                            }
-
-                            if (parentDirectory != null && !parentDirectoryPaths.Contains(parentDirectory.FullName))
-                            {
-                                parentDirectoryPaths.Add(parentDirectory.FullName);
-                            }
-                        }
-
-                        writer.WriteLine();
+                        AppendUploadCommand(uploadCommands, processedFiles, dataFile, md5Base64);
                     }
 
-                    // Step through parentDirectoryPaths and look for any unprocessed text files in subdirectories
-                    foreach (var parentDirectory in parentDirectoryPaths)
+                    checksumFilePath = checksumFileUpdater.GetChecksumFilePath();
+                    AppendTextFilesToOutputFiles(
+                        checksumFilePath, baseOutputDirectoryPath,
+                        uploadCommands, processedFiles,
+                        checksumFileUpdater.ChecksumFileDirectory);
+
+                    if (Options.ParentDirectoryDepth > 0)
                     {
-                        AppendTextFilesToBatchFile(writer, processedFiles, new DirectoryInfo(parentDirectory));
+                        var parentDirectory = item.Value.ChecksumFileDirectory.Parent;
+                        for (var i = 2; i <= Options.ParentDirectoryDepth; i++)
+                        {
+                            if (parentDirectory == null)
+                                break;
+
+                            parentDirectory = parentDirectory.Parent;
+                        }
+
+                        if (parentDirectory != null && !parentDirectoryPaths.Contains(parentDirectory.FullName))
+                        {
+                            parentDirectoryPaths.Add(parentDirectory.FullName);
+                        }
+                    }
+
+                    uploadCommands.Add(string.Empty);
+                }
+
+                // Step through parentDirectoryPaths and look for any unprocessed text files in subdirectories
+                foreach (var parentDirectory in parentDirectoryPaths)
+                {
+                    AppendTextFilesToOutputFiles(
+                        checksumFilePath, baseOutputDirectoryPath,
+                        uploadCommands, processedFiles,
+                        new DirectoryInfo(parentDirectory));
+                }
+
+
+                using (var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    foreach (var item in uploadCommands)
+                    {
+                        writer.WriteLine(item);
                     }
                 }
 
@@ -582,6 +605,7 @@ namespace DMSDatasetRetriever
                 OnStatusEvent(string.Format(
                     "{0} written to the batch file",
                     DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands")));
+
                 Console.WriteLine();
             }
             catch (Exception ex)

@@ -480,13 +480,22 @@ namespace DMSDatasetRetriever
                     OnDebugEvent("Creating new checksum file: " + PathUtils.CompactPathString(checksumFilePath, 100));
                 }
 
+                // Use a list to cache the data that will be written to the checksum file
+                // Once the list is complete, create/update the checksum file
+                var checksumLines = new List<string>();
+
+                WriteHeaderLine(checksumLines);
+
+                foreach (var dataFile in DataFileChecksums)
+                {
+                    WriteChecksumLine(checksumLines, dataFile);
+                }
+
                 using (var writer = new StreamWriter(new FileStream(checksumFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-                    WriteHeaderLine(writer);
-
-                    foreach (var dataFile in DataFileChecksums)
+                    foreach (var item in checksumLines)
                     {
-                        WriteChecksumLine(writer, dataFile);
+                        writer.WriteLine(item);
                     }
                 }
 
@@ -499,7 +508,7 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void WriteHeaderLine(TextWriter writer)
+        private void WriteHeaderLine(ICollection<string> checksumLines)
         {
             switch (ChecksumFileMode)
             {
@@ -511,7 +520,7 @@ namespace DMSDatasetRetriever
                         "sha1"
                     };
 
-                    writer.WriteLine(string.Join(",", columnNames));
+                    checksumLines.Add(string.Join(",", columnNames));
                     return;
 
                 case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
@@ -520,7 +529,7 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void WriteChecksumLine(TextWriter writer, KeyValuePair<string, FileChecksumInfo> dataFile)
+        private void WriteChecksumLine(ICollection<string> checksumLines, KeyValuePair<string, FileChecksumInfo> dataFile)
         {
             var dataFileInfo = dataFile.Value;
 
@@ -550,11 +559,11 @@ namespace DMSDatasetRetriever
                         dataFileInfo.SHA1
                     };
 
-                    writer.WriteLine(string.Join(",", dataValues));
+                    checksumLines.Add(string.Join(",", dataValues));
                     return;
 
                 case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
-                    writer.WriteLine("{0}\t*{1}", dataFileInfo.SHA1, dataFileInfo.FileName);
+                    checksumLines.Add(string.Format("{0}\t*{1}", dataFileInfo.SHA1, dataFileInfo.FileName));
                     return;
 
                 default:
