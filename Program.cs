@@ -65,11 +65,11 @@ namespace DMSDatasetRetriever
 
                 options.OutputSetOptions();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 Console.WriteLine();
                 Console.Write($"Error parsing options for {exeName}");
-                Console.WriteLine(e.Message);
+                Console.WriteLine(ex.Message);
                 Console.WriteLine($"See help with {exeName} --help");
                 return -1;
             }
