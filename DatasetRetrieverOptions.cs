@@ -158,7 +158,7 @@ namespace DMSDatasetRetriever
         /// </summary>
         [Option("RemoteUploadBatchFilePath", "RemoteUploadBatchFile", "BatchFilePath", HelpShowsDefault = false,
             HelpText = "Path to the directory in which to create the upload batch file " +
-                       "(default name UploadFiles_yyyy-MM-dd.bat);\n" +
+                       "(default name UploadFiles_yyyy-MM-dd_DatasetInfoFileName.bat);\n" +
                        "alternatively, the name (or full path) of the batch file to create (the name must end in '.bat')")]
         public string RemoteUploadBatchFilePath { get; set; } = string.Empty;
 

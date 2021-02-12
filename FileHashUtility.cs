@@ -521,7 +521,11 @@ namespace DMSDatasetRetriever
 
             try
             {
-                var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}.bat", DateTime.Now);
+                var batchFileNameSuffix = string.IsNullOrWhiteSpace(Options.DatasetInfoFilePath) ?
+                                              string.Empty :
+                                              string.Format("_{0}", Path.GetFileNameWithoutExtension(Options.DatasetInfoFilePath));
+
+                var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}{1}.bat", DateTime.Now, batchFileNameSuffix);
 
                 string uploadBatchFilePath;
 
