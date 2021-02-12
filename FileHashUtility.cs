@@ -101,6 +101,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Look for any text files in the specified directory, recursively searching subdirectories
         /// For any not present in processedFiles, append upload commands to the batch file and to the checksum file
+        /// Also append the checksum file to the batch file
         /// </summary>
         /// <param name="checksumFilePath">Checksum file path (only used if ChecksumFileMode is MoTrPAC</param>
         /// <param name="baseOutputDirectoryPath">Base output directory path</param>
@@ -114,16 +115,12 @@ namespace DMSDatasetRetriever
             ISet<string> processedFiles,
             DirectoryInfo directory)
         {
-            var textFiles = directory.GetFiles("*.txt", SearchOption.AllDirectories).ToList();
-            if (textFiles.Count == 0)
-            {
-                return;
-            }
+            var filesToAdd = directory.GetFiles("*.txt", SearchOption.AllDirectories).ToList();
 
             var newFiles = new List<FileInfo>();
 
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-            foreach (var dataFile in textFiles)
+            foreach (var dataFile in filesToAdd)
             {
                 if (processedFiles.Contains(dataFile.FullName))
                 {
@@ -662,6 +659,10 @@ namespace DMSDatasetRetriever
                         uploadCommands, processedFiles,
                         new DirectoryInfo(parentDirectory));
                 }
+
+
+                var checksumFile = new FileInfo(checksumFilePath);
+                AppendUploadCommand(uploadCommands, processedFiles, checksumFile);
 
                 // Format the commands to align on gs://
                 AlignUploadCommands(uploadCommands);
