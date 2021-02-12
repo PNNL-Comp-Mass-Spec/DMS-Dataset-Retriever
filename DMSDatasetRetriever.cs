@@ -751,6 +751,8 @@ namespace DMSDatasetRetriever
                 if (!datasetInfoLoaded)
                     return false;
 
+                Options.DatasetInfoFilePath = datasetInfoFilePath;
+
                 var outputDirectory = new DirectoryInfo(outputDirectoryPath);
                 if (!outputDirectory.Exists)
                 {
