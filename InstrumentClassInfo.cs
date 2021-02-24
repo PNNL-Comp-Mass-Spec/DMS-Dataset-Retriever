@@ -68,32 +68,17 @@ namespace DMSDatasetRetriever
         /// <param name="rawDataType">Raw data type</param>
         private RawDataTypes GetRawDataTypeByName(string rawDataType)
         {
-            switch (rawDataType.ToLower())
+            return rawDataType.ToLower() switch
             {
-                case "bruker_ft":
-                    return RawDataTypes.BrukerFt;
-
-                case "bruker_tof_baf":
-                    return RawDataTypes.BrukerTofBaf;
-
-                case "data_folders":
-                    return RawDataTypes.DataFolder;
-
-                case "dot_d_folders":
-                    return RawDataTypes.DotDFolder;
-
-                case "dot_raw_files":
-                    return RawDataTypes.DotRawFile;
-
-                case "dot_uimf_files":
-                    return RawDataTypes.DotUimfFile;
-
-                case "dot_raw_folder":
-                    return RawDataTypes.DotRawFolder;
-
-                default:
-                    return RawDataTypes.Unknown;
-            }
+                "bruker_ft" => RawDataTypes.BrukerFt,
+                "bruker_tof_baf" => RawDataTypes.BrukerTofBaf,
+                "data_folders" => RawDataTypes.DataFolder,
+                "dot_d_folders" => RawDataTypes.DotDFolder,
+                "dot_raw_files" => RawDataTypes.DotRawFile,
+                "dot_uimf_files" => RawDataTypes.DotUimfFile,
+                "dot_raw_folder" => RawDataTypes.DotRawFolder,
+                _ => RawDataTypes.Unknown
+            };
         }
 
         /// <summary>
