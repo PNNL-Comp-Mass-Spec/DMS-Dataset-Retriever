@@ -135,30 +135,29 @@ namespace DMSDatasetRetriever
                 return;
 
             // Also append the text files to the checksum file
-            using (var writer = new StreamWriter(new FileStream(checksumFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+            using var writer = new StreamWriter(new FileStream(checksumFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+
+            var dataValues = new List<string>();
+            foreach (var item in newFiles)
             {
-                var dataValues = new List<string>();
-                foreach (var item in newFiles)
+                string relativeFilePath;
+                if (item.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    string relativeFilePath;
-                    if (item.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        relativeFilePath = GetRelativeFilePath(item, baseOutputDirectoryPath);
-                    }
-                    else
-                    {
-                        relativeFilePath = item.Name;
-                    }
-
-                    var md5Sum = ComputeChecksumMD5(item, out _);
-                    var sha1Sum = ComputeChecksumSHA1(item);
-
-                    dataValues.Clear();
-                    dataValues.Add(ChecksumFileUpdater.UpdatePathSeparators(relativeFilePath));
-                    dataValues.Add(md5Sum);
-                    dataValues.Add(sha1Sum);
-                    writer.WriteLine(string.Join(",", dataValues));
+                    relativeFilePath = GetRelativeFilePath(item, baseOutputDirectoryPath);
                 }
+                else
+                {
+                    relativeFilePath = item.Name;
+                }
+
+                var md5Sum = ComputeChecksumMD5(item, out _);
+                var sha1Sum = ComputeChecksumSHA1(item);
+
+                dataValues.Clear();
+                dataValues.Add(ChecksumFileUpdater.UpdatePathSeparators(relativeFilePath));
+                dataValues.Add(md5Sum);
+                dataValues.Add(sha1Sum);
+                writer.WriteLine(string.Join(",", dataValues));
             }
         }
 
@@ -662,19 +661,17 @@ namespace DMSDatasetRetriever
                         new DirectoryInfo(parentDirectory));
                 }
 
-
                 var checksumFile = new FileInfo(checksumFilePath);
                 AppendUploadCommand(uploadCommands, processedFiles, checksumFile);
 
                 // Format the commands to align on gs://
                 AlignUploadCommands(uploadCommands);
 
-                using (var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                foreach (var item in uploadCommands)
                 {
-                    foreach (var item in uploadCommands)
-                    {
-                        writer.WriteLine(item);
-                    }
+                    writer.WriteLine(item);
                 }
 
                 Console.WriteLine();
@@ -846,15 +843,9 @@ namespace DMSDatasetRetriever
 
         private string GetRemotePathFromLinkFile(FileSystemInfo linkFile)
         {
-            using (var reader = new StreamReader(new FileStream(linkFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-            {
-                if (!reader.EndOfStream)
-                {
-                    return reader.ReadLine();
-                }
-            }
+            using var reader = new StreamReader(new FileStream(linkFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-            return string.Empty;
+            return !reader.EndOfStream ? reader.ReadLine() : string.Empty;
         }
     }
 }

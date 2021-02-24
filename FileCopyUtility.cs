@@ -370,10 +370,9 @@ namespace DMSDatasetRetriever
 
                 OnStatusEvent("Creating link file: " + PathUtils.CompactPathString(targetFile.FullName, 100));
 
-                using (var writer = new StreamWriter(new FileStream(targetFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                {
-                    writer.WriteLine(sourceFile.FullName);
-                }
+                using var writer = new StreamWriter(new FileStream(targetFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                writer.WriteLine(sourceFile.FullName);
             }
             catch (Exception ex)
             {

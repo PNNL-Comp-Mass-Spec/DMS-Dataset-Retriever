@@ -324,46 +324,45 @@ namespace DMSDatasetRetriever
                     columnDelimiter = checksumFile.Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
                 }
 
-                using (var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    linesRead++;
+
+                    var lineParts = dataLine.Split(columnDelimiter).ToList();
+
+                    if (linesRead == 1 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        // Parse the header line
+                        var headerLine = string.Join("\t", lineParts);
 
-                        linesRead++;
-
-                        var lineParts = dataLine.Split(columnDelimiter).ToList();
-
-                        if (linesRead == 1 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                        var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
+                        if (!validHeaders)
                         {
-                            // Parse the header line
-                            var headerLine = string.Join("\t", lineParts);
-
-                            var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
-                            if (!validHeaders)
-                            {
-                                OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
-                                var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
-                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
-                                break;
-                            }
-
-                            continue;
+                            OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
+                            var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
+                            OnDebugEvent("Supported headers are: " + defaultHeaderNames);
+                            break;
                         }
 
-                        switch (ChecksumFileMode)
-                        {
-                            case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
-                                ParseChecksumFileLineMoTrPAC(columnMap, lineParts);
-                                break;
+                        continue;
+                    }
 
-                            case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
-                                ParseChecksumFileLineCPTAC(columnMap, lineParts);
-                                break;
-                        }
+                    switch (ChecksumFileMode)
+                    {
+                        case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
+                            ParseChecksumFileLineMoTrPAC(columnMap, lineParts);
+                            break;
+
+                        case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
+                            ParseChecksumFileLineCPTAC(columnMap, lineParts);
+                            break;
                     }
                 }
             }
@@ -505,12 +504,11 @@ namespace DMSDatasetRetriever
                     WriteChecksumLine(checksumLines, dataFile);
                 }
 
-                using (var writer = new StreamWriter(new FileStream(checksumFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var writer = new StreamWriter(new FileStream(checksumFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                foreach (var item in checksumLines)
                 {
-                    foreach (var item in checksumLines)
-                    {
-                        writer.WriteLine(item);
-                    }
+                    writer.WriteLine(item);
                 }
 
                 return true;

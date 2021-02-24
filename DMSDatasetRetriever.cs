@@ -583,63 +583,62 @@ namespace DMSDatasetRetriever
                     return false;
                 }
 
-                using (var reader = new StreamReader(new FileStream(datasetInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(datasetInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var columnMap = new Dictionary<DatasetInfoColumns, int>();
+
+                while (!reader.EndOfStream)
                 {
-                    var columnMap = new Dictionary<DatasetInfoColumns, int>();
-
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (columnMap.Count == 0)
-                        {
-                            var headerLineParsed = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, DatasetInfoColumnNames);
-                            if (!headerLineParsed)
-                            {
-                                ReportWarning("No valid column names were found in the header line of the dataset info file; unable to continue");
-                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames, "   ");
-                                OnDebugEvent("Supported headers are:\n  " + defaultHeaderNames);
-                                return false;
-                            }
-
-                            if (columnMap[DatasetInfoColumns.DatasetName] < 0)
-                            {
-                                ReportWarning("Dataset info file is missing the Dataset name column on the header line; unable to continue");
-                                var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames, "   ");
-                                OnDebugEvent("Supported headers are:\n  " + defaultHeaderNames);
-                                return false;
-                            }
-
-                            continue;
-                        }
-
-                        var rowData = dataLine.Split('\t').ToList();
-
-                        var datasetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.DatasetName, string.Empty);
-                        var targetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetName, string.Empty);
-                        var targetDirectory = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetDirectory, string.Empty);
-
-                        if (string.IsNullOrWhiteSpace(datasetName))
-                        {
-                            ReportWarning("Skipping line with empty dataset name: " + dataLine);
-                        }
-
-                        var datasetInfo = new DatasetInfo(datasetName)
-                        {
-                            TargetDatasetName = targetName,
-                            TargetDirectory = targetDirectory
-                        };
-
-                        datasetList.Add(datasetInfo);
-                    }
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
 
                     if (columnMap.Count == 0)
                     {
-                        ReportWarning("Dataset info file was empty: " + datasetInfoFile.FullName);
-                        return false;
+                        var headerLineParsed = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, DatasetInfoColumnNames);
+                        if (!headerLineParsed)
+                        {
+                            ReportWarning("No valid column names were found in the header line of the dataset info file; unable to continue");
+                            var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames, "   ");
+                            OnDebugEvent("Supported headers are:\n  " + defaultHeaderNames);
+                            return false;
+                        }
+
+                        if (columnMap[DatasetInfoColumns.DatasetName] < 0)
+                        {
+                            ReportWarning("Dataset info file is missing the Dataset name column on the header line; unable to continue");
+                            var defaultHeaderNames = DataTableUtils.GetExpectedHeaderLine(DatasetInfoColumnNames, "   ");
+                            OnDebugEvent("Supported headers are:\n  " + defaultHeaderNames);
+                            return false;
+                        }
+
+                        continue;
                     }
+
+                    var rowData = dataLine.Split('\t').ToList();
+
+                    var datasetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.DatasetName, string.Empty);
+                    var targetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetName, string.Empty);
+                    var targetDirectory = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetDirectory, string.Empty);
+
+                    if (string.IsNullOrWhiteSpace(datasetName))
+                    {
+                        ReportWarning("Skipping line with empty dataset name: " + dataLine);
+                    }
+
+                    var datasetInfo = new DatasetInfo(datasetName)
+                    {
+                        TargetDatasetName = targetName,
+                        TargetDirectory = targetDirectory
+                    };
+
+                    datasetList.Add(datasetInfo);
+                }
+
+                if (columnMap.Count == 0)
+                {
+                    ReportWarning("Dataset info file was empty: " + datasetInfoFile.FullName);
+                    return false;
                 }
 
                 if (datasetList.Count == 0)
