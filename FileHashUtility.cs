@@ -818,8 +818,7 @@ namespace DMSDatasetRetriever
 
                 if (!string.IsNullOrWhiteSpace(remoteFilePath))
                 {
-                    var remoteFile = new FileInfo(remoteFilePath);
-                    return remoteFile;
+                    return new FileInfo(remoteFilePath);
                 }
             }
 
