@@ -198,7 +198,8 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Load an existing checksum file (if it exists)
         /// </summary>
-        public void LoadExistingChecksumFile()
+        /// <param name="warnExistingFileNotFound"></param>
+        public void LoadExistingChecksumFile(bool warnExistingFileNotFound = false)
         {
             try
             {
@@ -279,9 +280,18 @@ namespace DMSDatasetRetriever
 
                 if (checksumFile == null)
                 {
-                    OnWarningEvent(string.Format(
-                        "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
-                        ChecksumFileDirectory.FullName, ChecksumFileMode));
+                    if (warnExistingFileNotFound)
+                    {
+                        OnWarningEvent(string.Format(
+                            "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
+                            ChecksumFileDirectory.FullName, ChecksumFileMode));
+                    }
+                    else
+                    {
+                        OnStatusEvent(string.Format(
+                            "Existing checksum file not found; a new {0} one will be created in {1}",
+                            ChecksumFileMode, ChecksumFileDirectory.FullName));
+                    }
 
                     return;
                 }
