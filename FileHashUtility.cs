@@ -444,6 +444,8 @@ namespace DMSDatasetRetriever
                 if (checksumData.Count == 0)
                     return true;
 
+                Console.WriteLine();
+
                 var progressChunkSize = 100 / (float)checksumData.Count;
 
                 var itemsProcessed = 0;
