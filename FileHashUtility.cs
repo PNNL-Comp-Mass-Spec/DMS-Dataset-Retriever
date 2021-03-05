@@ -103,13 +103,14 @@ namespace DMSDatasetRetriever
         /// For any not present in processedFiles, append upload commands to the batch file and to the checksum file
         /// Also append the checksum file to the batch file
         /// </summary>
-        /// <param name="checksumFilePath">Checksum file path (only used if ChecksumFileMode is MoTrPAC</param>
+        /// <param name="checksumFileUpdater">Checksum file updater (only used if ChecksumFileMode is MoTrPAC</param>
         /// <param name="baseOutputDirectoryPath">Base output directory path</param>
         /// <param name="uploadCommands">List of commands for the batch file</param>
         /// <param name="processedFiles">List of processed files</param>
         /// <param name="directory">Directory</param>
-        private void AppendTextFilesToOutputFiles(
-            string checksumFilePath,
+        /// <returns>True if no errors, false if checksum mismatch</returns>
+        private bool AppendTextFilesToOutputFiles(
+            ChecksumFileUpdater checksumFileUpdater,
             string baseOutputDirectoryPath,
             ICollection<string> uploadCommands,
             ISet<string> processedFiles,
@@ -131,10 +132,12 @@ namespace DMSDatasetRetriever
                 newFiles.Add(dataFile);
             }
 
-            if (string.IsNullOrWhiteSpace(checksumFilePath) || Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
-                return;
+            var checksumFilePath = checksumFileUpdater.GetChecksumFilePath();
 
-            // Also append the text files to the checksum file
+            if (string.IsNullOrWhiteSpace(checksumFilePath) || Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                return true;
+
+            // Also append the text files to the checksum file, but only if not yet present
             using var writer = new StreamWriter(new FileStream(checksumFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
 
             var dataValues = new List<string>();
@@ -154,11 +157,36 @@ namespace DMSDatasetRetriever
                 var sha1Sum = ComputeChecksumSHA1(item);
 
                 dataValues.Clear();
-                dataValues.Add(ChecksumFileUpdater.UpdatePathSeparators(relativeFilePath));
+
+                var relativePathToStore = ChecksumFileUpdater.UpdatePathSeparators(relativeFilePath);
+
+                if (checksumFileUpdater.DataFileChecksums.TryGetValue(relativePathToStore, out var existingChecksum))
+                {
+                    if (existingChecksum.SHA1.Equals(sha1Sum))
+                        continue;
+
+                    OnWarningEvent("Existing checksum value does not match the new checksum value for file " + relativePathToStore);
+                    OnWarningEvent(string.Format("Old: {0}", existingChecksum.SHA1));
+                    OnWarningEvent(string.Format("New: {0}", sha1Sum));
+                    return false;
+                }
+
+                var checksumInfo = new FileChecksumInfo(relativePathToStore)
+                {
+                    MD5 = md5Sum,
+                    SHA1 = sha1Sum
+                };
+
+                checksumFileUpdater.DataFileChecksums.Add(relativePathToStore, checksumInfo);
+
+                dataValues.Add(relativePathToStore);
                 dataValues.Add(md5Sum);
                 dataValues.Add(sha1Sum);
+
                 writer.WriteLine(string.Join(",", dataValues));
             }
+
+            return true;
         }
 
         private void AppendUploadCommand(ICollection<string> uploadCommands, ISet<string> processedFiles, FileInfo dataFile, string md5Base64 = "")
@@ -464,9 +492,9 @@ namespace DMSDatasetRetriever
 
                 var checksumSuccessOverall = (successCount == checksumData.Count);
 
-                CreateUploadBatchFile(checksumData, baseOutputDirectoryPath);
+                var batchFileSuccess = CreateUploadBatchFile(checksumData, baseOutputDirectoryPath);
 
-                return checksumSuccessOverall;
+                return checksumSuccessOverall && batchFileSuccess;
             }
             catch (Exception ex)
             {
@@ -501,7 +529,7 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void CreateUploadBatchFile(
+        private bool CreateUploadBatchFile(
             IReadOnlyDictionary<string, ChecksumFileUpdater> checksumData,
             string baseOutputDirectoryPath)
         {
@@ -509,7 +537,7 @@ namespace DMSDatasetRetriever
             {
                 // Upload batch file creation is not supported for this checksum file type
                 // Nothing to do
-                return;
+                return true;
             }
 
             if (Options.VerboseMode)
@@ -591,7 +619,7 @@ namespace DMSDatasetRetriever
                         OnDebugEvent("Full path: " + PathUtils.CompactPathString(batchFileInfo.FullName, 100));
                     }
 
-                    return;
+                    return true;
                 }
 
                 OnStatusEvent("Creating " + uploadBatchFilePath);
@@ -606,7 +634,6 @@ namespace DMSDatasetRetriever
                 // Use a list to cache the data that will be written to the batch file
                 // Once the list is complete, create/update the batch file
                 var uploadCommands = new List<string>();
-                var checksumFilePath = string.Empty;
 
                 foreach (var item in checksumData)
                 {
@@ -626,11 +653,16 @@ namespace DMSDatasetRetriever
                         AppendUploadCommand(uploadCommands, processedFiles, dataFile, md5Base64);
                     }
 
-                    checksumFilePath = checksumFileUpdater.GetChecksumFilePath();
-                    AppendTextFilesToOutputFiles(
-                        checksumFilePath, baseOutputDirectoryPath,
+                    var success = AppendTextFilesToOutputFiles(
+                        checksumFileUpdater, baseOutputDirectoryPath,
                         uploadCommands, processedFiles,
                         checksumFileUpdater.ChecksumFileDirectory);
+
+                    if (!success)
+                    {
+                        OnWarningEvent("AppendTextFilesToOutputFiles returned false; aborting");
+                        return false;
+                    }
 
                     if (Options.ParentDirectoryDepth > 0)
                     {
@@ -652,17 +684,26 @@ namespace DMSDatasetRetriever
                     uploadCommands.Add(string.Empty);
                 }
 
-                // Step through parentDirectoryPaths and look for any unprocessed text files in subdirectories
-                foreach (var parentDirectory in parentDirectoryPaths)
+                if (checksumData.Count > 0)
                 {
-                    AppendTextFilesToOutputFiles(
-                        checksumFilePath, baseOutputDirectoryPath,
-                        uploadCommands, processedFiles,
-                        new DirectoryInfo(parentDirectory));
-                }
+                    var checksumFileUpdater = checksumData[checksumData.Keys.First()];
 
-                var checksumFile = new FileInfo(checksumFilePath);
-                AppendUploadCommand(uploadCommands, processedFiles, checksumFile);
+                    // Step through parentDirectoryPaths and look for any unprocessed text files in subdirectories
+                    foreach (var parentDirectory in parentDirectoryPaths)
+                    {
+                        AppendTextFilesToOutputFiles(
+                            checksumFileUpdater, baseOutputDirectoryPath,
+                            uploadCommands, processedFiles,
+                            new DirectoryInfo(parentDirectory));
+                    }
+
+                    var checksumFile = new FileInfo(checksumFileUpdater.GetChecksumFilePath());
+                    AppendUploadCommand(uploadCommands, processedFiles, checksumFile);
+                }
+                else
+                {
+                    OnWarningEvent("The checksumData dictionary is empty in CreateUploadBatchFile; not creating a checksum file");
+                }
 
                 // Format the commands to align on gs://
                 AlignUploadCommands(uploadCommands);
@@ -682,10 +723,12 @@ namespace DMSDatasetRetriever
                     DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands")));
 
                 Console.WriteLine();
+                return true;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error in CreateUploadBatchFile", ex);
+                return false;
             }
         }
 
