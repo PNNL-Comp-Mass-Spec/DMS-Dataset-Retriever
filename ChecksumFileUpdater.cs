@@ -250,6 +250,7 @@ namespace DMSDatasetRetriever
                 }
 
                 FileInfo checksumFile = null;
+                var fileSpecMessage = string.Empty;
 
                 foreach (var directory in directoriesToCheck.Where(directory => directory.Exists))
                 {
@@ -267,6 +268,7 @@ namespace DMSDatasetRetriever
                         foreach (var item in checksumFiles.Where(item => item.Length > 0))
                         {
                             checksumFile = item;
+                            fileSpecMessage = string.Format("(matched {0})", fileSpec);
                             break;
                         }
 
@@ -296,7 +298,10 @@ namespace DMSDatasetRetriever
                     return;
                 }
 
-                OnDebugEvent("Loading existing checksum file: " + PathUtils.CompactPathString(checksumFile.FullName, 100));
+                OnDebugEvent(string.Format(
+                    "Loading existing checksum file{0}: {1}",
+                    fileSpecMessage,
+                    PathUtils.CompactPathString(checksumFile.FullName, 100)));
 
                 var columnMap = new Dictionary<ChecksumFileColumns, int>();
                 var columnNamesByIdentifier = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
