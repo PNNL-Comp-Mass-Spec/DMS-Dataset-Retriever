@@ -135,7 +135,9 @@ namespace DMSDatasetRetriever
             var checksumFilePath = checksumFileUpdater.GetChecksumFilePath();
 
             if (string.IsNullOrWhiteSpace(checksumFilePath) || Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+            {
                 return true;
+            }
 
             // Also append the text files to the checksum file, but only if not yet present
             using var writer = new StreamWriter(new FileStream(checksumFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
@@ -171,7 +173,7 @@ namespace DMSDatasetRetriever
                     return false;
                 }
 
-                var checksumInfo = new FileChecksumInfo(relativePathToStore)
+                var checksumInfo = new FileChecksumInfo(relativePathToStore, item.FullName)
                 {
                     MD5 = md5Sum,
                     SHA1 = sha1Sum
@@ -834,7 +836,7 @@ namespace DMSDatasetRetriever
                 relativeFilePath = Path.GetFileName(datasetFilePath);
             }
 
-            var newChecksumInfo = new FileChecksumInfo(relativeFilePath);
+            var newChecksumInfo = new FileChecksumInfo(relativeFilePath, dataFile.FullName);
             checksumFileUpdater.DataFileChecksums.Add(relativeFilePath, newChecksumInfo);
 
             return newChecksumInfo;

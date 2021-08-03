@@ -395,7 +395,7 @@ namespace DMSDatasetRetriever
                     cleanFileName, ChecksumFileDirectory.FullName));
             }
 
-            var fileChecksumInfo = new FileChecksumInfo(cleanFileName)
+            var fileChecksumInfo = new FileChecksumInfo(cleanFileName, string.Empty)
             {
                 SHA1 = sha1
             };
@@ -408,6 +408,8 @@ namespace DMSDatasetRetriever
             var relativeFilePath = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename).Trim();
             var md5 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.MD5).Trim();
             var sha1 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.SHA1).Trim();
+
+            var fullFilePath = string.Empty;
 
             if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC &&
                 BaseOutputDirectoryPath.Length > 0 &&
@@ -423,6 +425,7 @@ namespace DMSDatasetRetriever
                     if (dataFile.FullName.StartsWith(BaseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
                     {
                         relativeFilePath = Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(BaseOutputDirectoryPath.Length).Trim('\\'));
+                        fullFilePath = dataFile.FullName;
                     }
 
                     break;
@@ -439,7 +442,7 @@ namespace DMSDatasetRetriever
                 return;
             }
 
-            var fileChecksumInfo = new FileChecksumInfo(relativeFilePath)
+            var fileChecksumInfo = new FileChecksumInfo(relativeFilePath, fullFilePath)
             {
                 MD5 = md5,
                 SHA1 = sha1
@@ -555,12 +558,12 @@ namespace DMSDatasetRetriever
             {
                 case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
                     string relativeFilePath;
-                    if (dataFileInfo.FilePath.Contains('/'))
+                    if (dataFileInfo.RelativeFilePath.Contains('/'))
                     {
                         // We already have a Linux-style relative file path; use as-is
-                        relativeFilePath = dataFileInfo.FilePath;
+                        relativeFilePath = dataFileInfo.RelativeFilePath;
                     }
-                    else if (string.IsNullOrWhiteSpace(BaseOutputDirectoryPath) || !dataFileInfo.FilePath.StartsWith(BaseOutputDirectoryPath))
+                    else if (string.IsNullOrWhiteSpace(BaseOutputDirectoryPath) || !dataFileInfo.FullFilePath.StartsWith(BaseOutputDirectoryPath))
                     {
                         relativeFilePath = dataFileInfo.FileName;
                     }

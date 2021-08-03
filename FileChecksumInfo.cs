@@ -16,9 +16,15 @@ namespace DMSDatasetRetriever
         public string FileName { get; }
 
         /// <summary>
-        /// Full file path
+        /// Full (absolute) file path
         /// </summary>
-        public string FilePath { get; }
+        /// <remarks>Will be an empty string for data read from an existing checksum file</remarks>
+        public string FullFilePath { get; set; }
+
+        /// <summary>
+        /// Relative file path
+        /// </summary>
+        public string RelativeFilePath { get; }
 
         /// <summary>
         /// Fraction number
@@ -61,11 +67,13 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="filePath">File path</param>
-        public FileChecksumInfo(string filePath)
+        /// <param name="relativeFilePath">Relative file path</param>
+        /// <param name="fullFilePath">Full (absolute) file path; may be an empty string</param>
+        public FileChecksumInfo(string relativeFilePath, string fullFilePath)
         {
-            FileName = Path.GetFileName(filePath);
-            FilePath = filePath;
+            FileName = Path.GetFileName(relativeFilePath);
+            RelativeFilePath = relativeFilePath;
+            FullFilePath = fullFilePath;
             MD5 = string.Empty;
             MD5_Base64 = string.Empty;
             SHA1 = string.Empty;
