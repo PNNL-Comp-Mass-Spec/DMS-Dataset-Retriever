@@ -569,7 +569,22 @@ namespace DMSDatasetRetriever
                     }
                     else
                     {
-                        relativeFilePath = dataFileInfo.FilePath.Substring(BaseOutputDirectoryPath.Length);
+                        // Remove the base output directory path, but keep the directory name
+                        var baseOutputDirectoryPath = new DirectoryInfo(BaseOutputDirectoryPath);
+
+                        string baseOutputDirectoryParent;
+                        if (baseOutputDirectoryPath.Parent == null)
+                        {
+                            OnWarningEvent("Cannot determine the parent directory of the base output directory; this is unexpected: " + BaseOutputDirectoryPath);
+                            baseOutputDirectoryParent = baseOutputDirectoryPath.FullName;
+                        }
+                        else
+                        {
+                            baseOutputDirectoryParent = baseOutputDirectoryPath.Parent.FullName;
+                        }
+
+                        // Linux-style slashes
+                        relativeFilePath = UpdatePathSeparators(dataFileInfo.FullFilePath.Substring(baseOutputDirectoryParent.Length).TrimStart('\\'));
                     }
 
                     var dataValues = new List<string>
