@@ -96,9 +96,7 @@ namespace DMSDatasetRetriever
                 if (!searchSuccess)
                     return false;
 
-                var copySuccess = CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
-
-                return copySuccess;
+                return CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
             }
             catch (Exception ex)
             {
@@ -119,9 +117,7 @@ namespace DMSDatasetRetriever
                 fileCopyUtility.ProgressUpdate += FileCopyUtilityOnProgressUpdate;
                 fileCopyUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                var success = fileCopyUtility.CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
-
-                return success;
+                return fileCopyUtility.CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
             }
             catch (Exception ex)
             {
@@ -151,8 +147,7 @@ namespace DMSDatasetRetriever
                 fileHashUtility.ProgressUpdate += FileHashUtilityOnProgressUpdate;
                 fileHashUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                var success = fileHashUtility.CreateChecksumFiles(datasetList, outputDirectory.FullName);
-                return success;
+                return fileHashUtility.CreateChecksumFiles(datasetList, outputDirectory.FullName);
             }
             catch (Exception ex)
             {
@@ -840,9 +835,7 @@ namespace DMSDatasetRetriever
                 if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
                     return true;
 
-                var checksumSuccess = CreateChecksumFiles(datasetList, outputDirectory);
-
-                return checksumSuccess;
+                return CreateChecksumFiles(datasetList, outputDirectory);
             }
             catch (Exception ex)
             {

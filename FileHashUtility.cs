@@ -221,14 +221,12 @@ namespace DMSDatasetRetriever
 
         private string ComputeChecksumMD5(FileSystemInfo dataFile, out string base64MD5)
         {
-            var md5 = HashUtilities.ComputeFileHashMD5(dataFile.FullName, out base64MD5);
-            return md5;
+            return HashUtilities.ComputeFileHashMD5(dataFile.FullName, out base64MD5);
         }
 
         private string ComputeChecksumSHA1(FileSystemInfo dataFile)
         {
-            var sha1 = HashUtilities.ComputeFileHashSha1(dataFile.FullName);
-            return sha1;
+            return HashUtilities.ComputeFileHashSha1(dataFile.FullName);
         }
 
         /// <summary>
@@ -749,9 +747,7 @@ namespace DMSDatasetRetriever
                 byteArray.Add(nextByte);
             }
 
-            var base64MD5 = Convert.ToBase64String(byteArray.ToArray());
-
-            return base64MD5;
+            return Convert.ToBase64String(byteArray.ToArray());
         }
 
         private string GenerateRemoteUrl(string fullFilePath)
@@ -783,9 +779,7 @@ namespace DMSDatasetRetriever
             else
                 remoteUrlBase = Options.RemoteUploadBaseURL + "/";
 
-            var remoteUrl = remoteUrlBase + fullFilePath.Substring(charIndex + RemoteUploadURLDirectoriesToMatch.Length).Replace('\\', '/');
-
-            return remoteUrl;
+            return remoteUrlBase + fullFilePath.Substring(charIndex + RemoteUploadURLDirectoriesToMatch.Length).Replace('\\', '/');
         }
 
         private ChecksumFileUpdater GetChecksumUpdater(
@@ -880,8 +874,7 @@ namespace DMSDatasetRetriever
             var baseOutputDirectoryName = Path.GetFileName(baseOutputDirectoryPath);
 
             // Look for the relative path of the file
-            var relativeFilePath = Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(baseOutputDirectoryPath.Length).TrimStart('\\'));
-            return relativeFilePath;
+            return Path.Combine(baseOutputDirectoryName, dataFile.FullName.Substring(baseOutputDirectoryPath.Length).TrimStart('\\'));
         }
 
         private string GetRemotePathFromLinkFile(FileSystemInfo linkFile)
