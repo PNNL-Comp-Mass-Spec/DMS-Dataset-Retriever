@@ -819,7 +819,9 @@ namespace DMSDatasetRetriever
                         "Null value for {0} provided to RetrieveDatasetFiles; cannot continue", nameof(outputDirectory)));
                 }
 
-                var dbTools = DbToolsFactory.GetDBTools(Options.DMSConnectionString);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(Options.DMSConnectionString, "DMSDatasetRetriever");
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse);
                 RegisterEvents(dbTools);
 
                 // Obtain metadata from DMS for datasets in datasetList
