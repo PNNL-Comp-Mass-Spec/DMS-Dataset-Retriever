@@ -23,8 +23,7 @@ namespace DMSDatasetRetriever
                               "The input file can also have a column for a new name to use for the dataset, supporting renaming files " +
                               "to conform to a naming schema different than the original name used in DMS. ",
 
-                ContactInfo = "Program written by Matthew Monroe for PNNL (Richland, WA) in 2020" +
-                              Environment.NewLine +
+                ContactInfo = "Program written by Matthew Monroe for PNNL (Richland, WA)" + Environment.NewLine +
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
                               "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
 
@@ -39,13 +38,19 @@ namespace DMSDatasetRetriever
 
             parser.AddParamFileKey("Conf");
 
-            var parseResults = parser.ParseArgs(args);
-            var options = parseResults.ParsedResults;
+            var result = parser.ParseArgs(args);
+            var options = result.ParsedResults;
 
             try
             {
-                if (!parseResults.Success)
+                if (!result.Success)
                 {
+                    if (parser.CreateParamFileProvided)
+                    {
+                        return 0;
+                    }
+
+                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                     // Error messages should have already been shown to the user
                     Thread.Sleep(1500);
                     return -1;
