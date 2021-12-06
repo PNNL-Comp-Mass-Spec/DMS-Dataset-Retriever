@@ -224,7 +224,7 @@ namespace DMSDatasetRetriever
                 var directoriesToCheck = new List<DirectoryInfo>
                 {
                     defaultChecksumFile.Directory,
-                    new DirectoryInfo(BaseOutputDirectoryPath)
+                    new(BaseOutputDirectoryPath)
                 };
 
                 var checksumFileNames = new List<string>();

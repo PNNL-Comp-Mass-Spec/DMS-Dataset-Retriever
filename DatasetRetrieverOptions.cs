@@ -15,8 +15,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "November 12, 2021";
-
+        public const string PROGRAM_DATE = "December 6, 2021";
 
         /// <summary>
         /// Checksum file modes
