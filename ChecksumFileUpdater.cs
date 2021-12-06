@@ -390,6 +390,17 @@ namespace DMSDatasetRetriever
                     cleanFileName, ChecksumFileDirectory.FullName);
             }
 
+            if (DataFiles.Count > 0)
+            {
+                // Only store this checksum info if the file is in DataFiles
+                var storeChecksum = DataFiles.Any(dataFile => dataFile.Name.Equals(cleanFileName));
+
+                if (!storeChecksum)
+                {
+                    return;
+                }
+            }
+
             var fileChecksumInfo = new FileChecksumInfo(cleanFileName, string.Empty)
             {
                 SHA1 = sha1
