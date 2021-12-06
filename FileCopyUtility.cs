@@ -157,10 +157,10 @@ namespace DMSDatasetRetriever
                 Console.WriteLine();
                 if (datasetCountToCopy > 0)
                 {
-                    OnStatusEvent(string.Format(
+                    OnStatusEvent(
                         "Retrieving data for {0}; {1} total",
                         DMSDatasetRetriever.GetCountWithUnits(datasetCountToCopy, "dataset", "datasets"),
-                        FileTools.BytesToHumanReadable(TotalBytesToCopy)));
+                        FileTools.BytesToHumanReadable(TotalBytesToCopy));
 
                     OnStatusEvent("Target directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
                     Console.WriteLine();
@@ -311,15 +311,17 @@ namespace DMSDatasetRetriever
                 {
                     if (Options.UseDatasetLinkFiles)
                     {
-                        OnStatusEvent(string.Format("Preview create link file for {0}\n  at {1}",
+                        OnStatusEvent(
+                            "Preview create link file for {0}\n  at {1}",
                             FileTools.CompactPathString(sourceFile.FullName, 100),
-                            FileTools.CompactPathString(targetFile.FullName, 120)));
+                            FileTools.CompactPathString(targetFile.FullName, 120));
                     }
                     else
                     {
-                        OnStatusEvent(string.Format("Preview copy {0}\n  to {1}",
+                        OnStatusEvent(
+                            "Preview copy {0}\n  to {1}",
                             FileTools.CompactPathString(sourceFile.FullName, 100),
-                            FileTools.CompactPathString(targetFile.FullName, 120)));
+                            FileTools.CompactPathString(targetFile.FullName, 120));
                     }
                 }
                 else
@@ -341,10 +343,10 @@ namespace DMSDatasetRetriever
                         }
                         else
                         {
-                            OnDebugEvent(string.Format(
+                            OnDebugEvent(
                                 "Error copying {0} to {1}",
                                 sourceFile.FullName,
-                                PathUtils.CompactPathString(targetFile.FullName, 100)));
+                                PathUtils.CompactPathString(targetFile.FullName, 100));
                         }
                     }
                 }

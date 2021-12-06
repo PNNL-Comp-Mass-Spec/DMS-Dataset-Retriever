@@ -208,18 +208,18 @@ namespace DMSDatasetRetriever
                     if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
                         return;
 
-                    OnWarningEvent(string.Format(
+                    OnWarningEvent(
                         "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
-                        ChecksumFileDirectory.FullName, ChecksumFileMode));
+                        ChecksumFileDirectory.FullName, ChecksumFileMode);
                     return;
                 }
 
                 var defaultChecksumFile = new FileInfo(ChecksumFilePath);
                 if (defaultChecksumFile.Directory == null)
                 {
-                    OnWarningEvent(string.Format(
+                    OnWarningEvent(
                         "Unable to determine the parent directory of the default checksum file: {0}",
-                        ChecksumFilePath));
+                        ChecksumFilePath);
                     return;
                 }
 
@@ -284,24 +284,23 @@ namespace DMSDatasetRetriever
                 {
                     if (warnExistingFileNotFound)
                     {
-                        OnWarningEvent(string.Format(
+                        OnWarningEvent(
                             "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
-                            ChecksumFileDirectory.FullName, ChecksumFileMode));
+                            ChecksumFileDirectory.FullName, ChecksumFileMode);
                     }
                     else
                     {
-                        OnStatusEvent(string.Format(
+                        OnStatusEvent(
                             "Existing checksum file not found; a new {0} one will be created in {1}",
-                            ChecksumFileMode, ChecksumFileDirectory.FullName));
+                            ChecksumFileMode, ChecksumFileDirectory.FullName);
                     }
 
                     return;
                 }
 
-                OnDebugEvent(string.Format(
+                OnDebugEvent(
                     "Loading existing checksum file{0}: {1}",
-                    fileSpecMessage,
-                    PathUtils.CompactPathString(checksumFile.FullName, 100)));
+                    fileSpecMessage, PathUtils.CompactPathString(checksumFile.FullName, 100));
 
                 var columnMap = new Dictionary<ChecksumFileColumns, int>();
                 var columnNamesByIdentifier = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
@@ -390,9 +389,9 @@ namespace DMSDatasetRetriever
 
             if (DataFileChecksums.ContainsKey(cleanFileName))
             {
-                OnDebugEvent(string.Format(
+                OnDebugEvent(
                     "Checksum file has multiple entries; skipping duplicate file {0} in directory {1}",
-                    cleanFileName, ChecksumFileDirectory.FullName));
+                    cleanFileName, ChecksumFileDirectory.FullName);
             }
 
             var fileChecksumInfo = new FileChecksumInfo(cleanFileName, string.Empty)
@@ -436,9 +435,10 @@ namespace DMSDatasetRetriever
 
             if (DataFileChecksums.ContainsKey(relativeFilePath))
             {
-                OnDebugEvent(string.Format(
+                OnDebugEvent(
                     "Checksum file has multiple entries; skipping duplicate file {0} in directory {1}",
-                    relativeFilePath, ChecksumFileDirectory.FullName));
+                    relativeFilePath, ChecksumFileDirectory.FullName);
+
                 return;
             }
 
@@ -479,15 +479,14 @@ namespace DMSDatasetRetriever
                 {
                     if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
                     {
-                        OnWarningEvent(string.Format(
-                            "WriteChecksumFile called when the ChecksumFileMode is {0}; nothing to do",
-                            ChecksumFileMode));
+                        OnWarningEvent("WriteChecksumFile called when the ChecksumFileMode is {0}; nothing to do", ChecksumFileMode);
                         return true;
                     }
 
-                    OnWarningEvent(string.Format(
+                    OnWarningEvent(
                         "Checksum file name could not be determined for {0} in WriteChecksumFile; ChecksumFileMode is {1}",
-                        ChecksumFileDirectory.FullName, ChecksumFileMode));
+                        ChecksumFileDirectory.FullName, ChecksumFileMode);
+
                     return false;
                 }
 

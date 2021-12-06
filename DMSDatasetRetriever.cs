@@ -299,9 +299,9 @@ namespace DMSDatasetRetriever
                 " FROM V_Dataset_Files_List_Report" +
                 " WHERE Dataset_ID IN (" + datasetIdList + ")";
 
-            OnDebugEvent(string.Format(
+            OnDebugEvent(
                 "Querying {0}, Dataset IDs {1}-{2}",
-                "V_Dataset_Files_List_Report", datasetIDs.First(), datasetIDs.Last()));
+                "V_Dataset_Files_List_Report", datasetIDs.First(), datasetIDs.Last());
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount: 2);
 
@@ -373,9 +373,9 @@ namespace DMSDatasetRetriever
                 "      V_Instrument_List_Export InstList ON DE.Instrument = InstList.Name" +
                 " WHERE DFP.Dataset IN (" + datasetNameList + ")";
 
-            OnDebugEvent(string.Format(
+            OnDebugEvent(
                 "Querying {0}, Dataset {1}",
-                "V_Dataset_Folder_Paths", quotedDatasetNames.First().Replace("\'", string.Empty)));
+                "V_Dataset_Folder_Paths", quotedDatasetNames.First().Replace("\'", string.Empty));
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount: 2);
 
@@ -708,9 +708,9 @@ namespace DMSDatasetRetriever
 
         private void ReportProgress(string progressMessage, float percentComplete, double percentCompleteOverall)
         {
-            OnStatusEvent(string.Format(
+            OnStatusEvent(
                 "{0:F1}% complete {1}; {2:F1}% complete overall",
-                percentComplete, progressMessage.ToLower(), percentCompleteOverall));
+                percentComplete, progressMessage.ToLower(), percentCompleteOverall);
         }
 
         private void ReportWarning(string message)

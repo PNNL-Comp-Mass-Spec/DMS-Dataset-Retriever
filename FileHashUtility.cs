@@ -168,8 +168,8 @@ namespace DMSDatasetRetriever
                         continue;
 
                     OnWarningEvent("Existing checksum value does not match the new checksum value for file " + relativePathToStore);
-                    OnWarningEvent(string.Format("Old: {0}", existingChecksum.SHA1));
-                    OnWarningEvent(string.Format("New: {0}", sha1Sum));
+                    OnWarningEvent("Old: {0}", existingChecksum.SHA1);
+                    OnWarningEvent("New: {0}", sha1Sum);
                     return false;
                 }
 
@@ -258,20 +258,19 @@ namespace DMSDatasetRetriever
                     if (checksumFile.Exists && checksumFile.Length > 0)
                     {
                         Console.WriteLine();
-                        OnStatusEvent(string.Format(
+                        OnStatusEvent(
                             "Checksum values are already up to date for {0} in {1}",
                             DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets"),
-                            Path.GetFileName(checksumFileUpdater.ChecksumFilePath)));
+                            Path.GetFileName(checksumFileUpdater.ChecksumFilePath));
 
                         return true;
                     }
 
                     Console.WriteLine();
-                    OnStatusEvent(string.Format(
+                    OnStatusEvent(
                         "Loaded checksum values from an existing file, but need to create {0} for {1}",
                         PathUtils.CompactPathString(checksumFileUpdater.ChecksumFilePath, 80),
-                        DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets")
-                    ));
+                        DMSDatasetRetriever.GetCountWithUnits(checksumFileUpdater.DataFiles.Count, "dataset", "datasets"));
                 }
 
                 Console.WriteLine();
@@ -285,12 +284,12 @@ namespace DMSDatasetRetriever
                 // Example messages:
                 // Preview compute checksum values for 1 dataset in CheckSumFileName
                 // Computing checksum values for 3 datasets in CheckSumFileName; 12.3 GB to process
-                OnStatusEvent(string.Format(
+                OnStatusEvent(
                     "{0} checksum values for {1} in {2}{3}",
                     action,
                     DMSDatasetRetriever.GetCountWithUnits(datasetCountToProcess, "dataset", "datasets"),
                     Path.GetFileName(checksumFileUpdater.ChecksumFilePath),
-                    bytesToProcess));
+                    bytesToProcess);
 
                 foreach (var dataFile in checksumFileUpdater.DataFiles)
                 {
@@ -434,9 +433,9 @@ namespace DMSDatasetRetriever
                     {
                         if (dataset.DatasetID > 0)
                         {
-                            OnWarningEvent(string.Format(
+                            OnWarningEvent(
                                 "Dataset {0} does not have any files in the target directory: {1}",
-                                dataset.DatasetName, dataset.TargetDirectory));
+                                dataset.DatasetName, dataset.TargetDirectory);
                         }
 
                         continue;
@@ -547,9 +546,9 @@ namespace DMSDatasetRetriever
 
             try
             {
-                var batchFileNameSuffix = string.IsNullOrWhiteSpace(Options.DatasetInfoFilePath) ?
-                                              string.Empty :
-                                              string.Format("_{0}", Path.GetFileNameWithoutExtension(Options.DatasetInfoFilePath));
+                var batchFileNameSuffix = string.IsNullOrWhiteSpace(Options.DatasetInfoFilePath)
+                    ? string.Empty
+                    : string.Format("_{0}", Path.GetFileNameWithoutExtension(Options.DatasetInfoFilePath));
 
                 var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}{1}.bat", DateTime.Now, batchFileNameSuffix);
 
@@ -586,9 +585,10 @@ namespace DMSDatasetRetriever
                     {
                         if (Options.VerboseMode)
                         {
-                            OnStatusEvent(string.Format(
+                            OnStatusEvent(
                                 "RemoteUploadBatchFilePath is not rooted; appending file {0} to {1}",
-                                Options.RemoteUploadBatchFilePath, Options.OutputDirectoryPath));
+                                Options.RemoteUploadBatchFilePath,
+                                Options.OutputDirectoryPath);
                         }
 
                         uploadBatchFilePath = Path.Combine(Options.OutputDirectoryPath, Options.RemoteUploadBatchFilePath);
@@ -599,9 +599,9 @@ namespace DMSDatasetRetriever
 
                         if (Options.VerboseMode)
                         {
-                            OnStatusEvent(string.Format(
+                            OnStatusEvent(
                                 "RemoteUploadBatchFilePath is not rooted; appending file {0} to {1}",
-                                batchFileName, targetDirectoryPath));
+                                batchFileName, targetDirectoryPath);
                         }
 
                         uploadBatchFilePath = Path.Combine(targetDirectoryPath, batchFileName);
@@ -718,9 +718,9 @@ namespace DMSDatasetRetriever
                 Console.WriteLine();
 
                 // Example: 12 file upload commands written to the batch file
-                OnStatusEvent(string.Format(
+                OnStatusEvent(
                     "{0} written to the batch file",
-                    DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands")));
+                    DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands"));
 
                 Console.WriteLine();
                 return true;
@@ -757,10 +757,9 @@ namespace DMSDatasetRetriever
             var charIndex = fullFilePath.LastIndexOf(RemoteUploadURLDirectoriesToMatch, StringComparison.OrdinalIgnoreCase);
             if (charIndex < 0)
             {
-                OnWarningEvent(string.Format(
+                OnWarningEvent(
                     "Could not find '{0}' in the local file path; cannot generate the remote URL for \n  {1}",
-                    RemoteUploadURLDirectoriesToMatch,
-                    fullFilePath));
+                    RemoteUploadURLDirectoriesToMatch, fullFilePath);
 
                 if (fullFilePath.Length < 3)
                     return fullFilePath;
