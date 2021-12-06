@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace DMSDatasetRetriever
 {
@@ -25,27 +24,6 @@ namespace DMSDatasetRetriever
         /// Relative file path
         /// </summary>
         public string RelativeFilePath { get; }
-
-        /// <summary>
-        /// Fraction number
-        /// </summary>
-        /// <remarks>Only present in MoTrPAC manifest files</remarks>
-        [Obsolete("No longer used")]
-        public int Fraction { get; set; }
-
-        /// <summary>
-        /// True if this is a technical replicate
-        /// </summary>
-        /// <remarks>Only present in MoTrPAC manifest files</remarks>
-        [Obsolete("No longer used")]
-        public bool IsTechnicalReplicate { get; set; }
-
-        /// <summary>
-        /// File comment
-        /// </summary>
-        /// <remarks>Only present in MoTrPAC manifest files</remarks>
-        [Obsolete("No longer used")]
-        public string Comment { get; set; } = string.Empty;
 
         /// <summary>
         /// MD5 hash of the file
