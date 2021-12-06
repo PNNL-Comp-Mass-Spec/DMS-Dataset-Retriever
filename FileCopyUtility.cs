@@ -37,7 +37,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="options">Optiosn</param>
+        /// <param name="options">Options</param>
         public FileCopyUtility(DatasetRetrieverOptions options)
         {
             Options = options;

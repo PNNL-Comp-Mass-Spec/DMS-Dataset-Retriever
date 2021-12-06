@@ -8,6 +8,8 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class DatasetFileOrDirectory
     {
+        // Ignore Spelling: Downloader
+
         #region "Properties"
 
         /// <summary>
