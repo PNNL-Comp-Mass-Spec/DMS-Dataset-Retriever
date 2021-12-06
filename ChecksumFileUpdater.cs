@@ -192,10 +192,10 @@ namespace DMSDatasetRetriever
         }
 
         /// <summary>
-        /// Load an existing checksum file (if it exists)
+        /// Load data from existing checksum files
         /// </summary>
         /// <param name="warnExistingFileNotFound"></param>
-        public void LoadExistingChecksumFile(bool warnExistingFileNotFound = false)
+        public void LoadExistingChecksumFiles(bool warnExistingFileNotFound = false)
         {
             try
             {
@@ -205,7 +205,7 @@ namespace DMSDatasetRetriever
                         return;
 
                     OnWarningEvent(
-                        "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
+                        "Checksum file name could not be determined for {0} in LoadExistingChecksumFiles; ChecksumFileMode is {1}",
                         ChecksumFileDirectory.FullName, ChecksumFileMode);
                     return;
                 }
@@ -227,25 +227,25 @@ namespace DMSDatasetRetriever
                     new(BaseOutputDirectoryPath)
                 };
 
-                var checksumFileNames = new List<string>();
+                var checksumFileMatchSpecs = new List<string>();
 
                 // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
                 switch (ChecksumFileMode)
                 {
                     case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
-                        checksumFileNames.Add("*.cksum");
+                        checksumFileMatchSpecs.Add("*.cksum");
                         break;
 
                     case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
-                        checksumFileNames.Add("*_manifest_*.csv");
-                        checksumFileNames.Add("*_MANIFEST.txt");
+                        checksumFileMatchSpecs.Add("*_manifest_*.csv");
+                        checksumFileMatchSpecs.Add("*_MANIFEST.txt");
                         break;
 
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
 
-                FileInfo checksumFile = null;
+                var checksumFiles = new List<FileInfo>();
                 var fileSpecMessage = string.Empty;
 
                 foreach (var directory in directoriesToCheck.Where(directory => directory.Exists))
@@ -253,50 +253,65 @@ namespace DMSDatasetRetriever
                     var candidateChecksumFile = new FileInfo(Path.Combine(directory.FullName, defaultChecksumFile.Name));
                     if (candidateChecksumFile.Exists && candidateChecksumFile.Length > 0)
                     {
-                        checksumFile = defaultChecksumFile;
-                        break;
+                        checksumFiles.Add(defaultChecksumFile);
+
+                        if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                            break;
+
+                        continue;
                     }
 
-                    foreach (var fileSpec in checksumFileNames)
+                    foreach (var fileSpec in checksumFileMatchSpecs)
                     {
-                        var checksumFiles = directory.GetFiles(fileSpec).ToList();
+                        var candidateFiles = directory.GetFiles(fileSpec).ToList();
 
-                        foreach (var item in checksumFiles.Where(item => item.Length > 0))
+                        foreach (var item in candidateFiles.Where(item => item.Length > 0))
                         {
-                            checksumFile = item;
-                            fileSpecMessage = string.Format("(matched {0})", fileSpec);
-                            break;
+                            checksumFiles.Add(item);
+
+                            if (string.IsNullOrWhiteSpace(fileSpecMessage))
+                                fileSpecMessage = string.Format("(matched {0})", fileSpec);
+
+                            if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                                break;
+                        }
+                    }
+
+                    if (checksumFiles.Count > 0 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                        break;
+                }
+
+                switch (checksumFiles.Count)
+                {
+                    case 0:
+                        {
+                            if (warnExistingFileNotFound)
+                            {
+                                OnWarningEvent(
+                                    "Checksum file name could not be determined for {0} in LoadExistingChecksumFiles; ChecksumFileMode is {1}",
+                                    ChecksumFileDirectory.FullName, ChecksumFileMode);
+                            }
+                            else
+                            {
+                                OnStatusEvent(
+                                    "Existing checksum file not found; a new {0} one will be created in {1}",
+                                    ChecksumFileMode, ChecksumFileDirectory.FullName);
+                            }
+
+                            return;
                         }
 
-                        if (checksumFile != null)
-                            break;
-                    }
+                    case 1:
+                        OnDebugEvent(
+                            "Loading existing checksum file{0}: {1}",
+                            fileSpecMessage, PathUtils.CompactPathString(checksumFiles[0].FullName, 100));
 
-                    if (checksumFile != null)
+                        break;
+
+                    default:
+                        OnDebugEvent("Loading existing checksum files{0}", fileSpecMessage);
                         break;
                 }
-
-                if (checksumFile == null)
-                {
-                    if (warnExistingFileNotFound)
-                    {
-                        OnWarningEvent(
-                            "Checksum file name could not be determined for {0} in LoadExistingChecksumFile; ChecksumFileMode is {1}",
-                            ChecksumFileDirectory.FullName, ChecksumFileMode);
-                    }
-                    else
-                    {
-                        OnStatusEvent(
-                            "Existing checksum file not found; a new {0} one will be created in {1}",
-                            ChecksumFileMode, ChecksumFileDirectory.FullName);
-                    }
-
-                    return;
-                }
-
-                OnDebugEvent(
-                    "Loading existing checksum file{0}: {1}",
-                    fileSpecMessage, PathUtils.CompactPathString(checksumFile.FullName, 100));
 
                 var columnMap = new Dictionary<ChecksumFileColumns, int>();
                 var columnNamesByIdentifier = new Dictionary<ChecksumFileColumns, SortedSet<string>>();
@@ -321,54 +336,58 @@ namespace DMSDatasetRetriever
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Comment, "tech_rep_comment");
 #pragma warning restore 618
 
-                    columnDelimiter = checksumFile.Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
+                    columnDelimiter = checksumFiles[0].Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
                 }
 
-                using var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                var linesRead = 0;
-                while (!reader.EndOfStream)
+                foreach (var checksumFile in checksumFiles)
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                        continue;
 
-                    linesRead++;
+                    using var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                    var lineParts = dataLine.Split(columnDelimiter).ToList();
-
-                    if (linesRead == 1 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
                     {
-                        // Parse the header line
-                        var headerLine = string.Join("\t", lineParts);
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
-                        var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
-                        if (!validHeaders)
+                        linesRead++;
+
+                        var lineParts = dataLine.Split(columnDelimiter).ToList();
+
+                        if (linesRead == 1 && ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
                         {
-                            OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
-                            var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
-                            OnDebugEvent("Supported headers are: " + defaultHeaderNames);
-                            break;
+                            // Parse the header line
+                            var headerLine = string.Join("\t", lineParts);
+
+                            var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
+                            if (!validHeaders)
+                            {
+                                OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
+                                var defaultHeaderNames = GetExpectedHeaderLine(columnNamesByIdentifier);
+                                OnDebugEvent("Supported headers are: " + defaultHeaderNames);
+                                break;
+                            }
+
+                            continue;
                         }
 
-                        continue;
-                    }
+                        switch (ChecksumFileMode)
+                        {
+                            case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
+                                ParseChecksumFileLineMoTrPAC(columnMap, lineParts);
+                                break;
 
-                    switch (ChecksumFileMode)
-                    {
-                        case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
-                            ParseChecksumFileLineMoTrPAC(columnMap, lineParts);
-                            break;
-
-                        case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
-                            ParseChecksumFileLineCPTAC(columnMap, lineParts);
-                            break;
+                            case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
+                                ParseChecksumFileLineCPTAC(columnMap, lineParts);
+                                break;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in LoadExistingChecksumFile", ex);
+                OnErrorEvent("Error in LoadExistingChecksumFiles", ex);
             }
         }
 

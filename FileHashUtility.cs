@@ -506,7 +506,7 @@ namespace DMSDatasetRetriever
         {
             try
             {
-                checksumFileUpdater.LoadExistingChecksumFile();
+                checksumFileUpdater.LoadExistingChecksumFiles();
 
                 var success = ComputeFileChecksums(checksumFileUpdater, baseOutputDirectoryPath, progressAtStart, progressAtEnd);
 
