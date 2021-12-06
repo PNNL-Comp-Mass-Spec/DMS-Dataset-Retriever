@@ -7,8 +7,6 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class FileChecksumInfo
     {
-        #region "Properties"
-
         /// <summary>
         /// File name
         /// </summary>
@@ -39,8 +37,6 @@ namespace DMSDatasetRetriever
         /// SHA-1 hash of the file
         /// </summary>
         public string SHA1 { get; set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

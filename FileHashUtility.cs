@@ -15,8 +15,6 @@ namespace DMSDatasetRetriever
     {
         // Ignore Spelling: cmd, gsutil, Foreach, cp
 
-        #region "Properties"
-
         /// <summary>
         /// Retrieval options
         /// </summary>
@@ -27,8 +25,6 @@ namespace DMSDatasetRetriever
         /// Names will be separated by the local computer's directory separator character
         /// </summary>
         private string RemoteUploadURLDirectoriesToMatch { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

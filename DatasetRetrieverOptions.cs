@@ -17,7 +17,6 @@ namespace DMSDatasetRetriever
         /// </summary>
         public const string PROGRAM_DATE = "November 12, 2021";
 
-        #region "Enums"
 
         /// <summary>
         /// Checksum file modes
@@ -46,10 +45,6 @@ namespace DMSDatasetRetriever
             /// </remarks>
             MoTrPAC = 2
         }
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// File listing datasets to retrieve
@@ -182,8 +177,6 @@ namespace DMSDatasetRetriever
         [Option("VerboseMode", "Verbose", "V", HelpShowsDefault = false,
             HelpText = "When true, show more status messages")]
         public bool VerboseMode { get; set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

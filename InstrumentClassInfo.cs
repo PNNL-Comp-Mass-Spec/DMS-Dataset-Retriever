@@ -23,8 +23,6 @@ namespace DMSDatasetRetriever
             DataFolder = 10
         }
 
-        #region "Properties"
-
         /// <summary>
         /// Instrument class name
         /// </summary>
@@ -44,8 +42,6 @@ namespace DMSDatasetRetriever
         /// Instrument class comment
         /// </summary>
         public string Comment { get; set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

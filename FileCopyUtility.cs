@@ -10,8 +10,6 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class FileCopyUtility : EventNotifier
     {
-        #region "Properties"
-
         /// <summary>
         /// Dataset link file suffix
         /// </summary>
@@ -31,8 +29,6 @@ namespace DMSDatasetRetriever
         /// Bytes that have been copied so far
         /// </summary>
         public long BytesCopied { get; private set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

@@ -16,8 +16,6 @@ namespace DMSDatasetRetriever
     {
         // Ignore Spelling: Purgable
 
-        #region "Constants and Enums"
-
         private enum DatasetInfoColumns
         {
             /// <summary>
@@ -35,10 +33,6 @@ namespace DMSDatasetRetriever
             /// </summary>
             TargetDirectory = 2
         }
-
-        #endregion
-
-        #region "Properties"
 
         private Dictionary<DatasetInfoColumns, SortedSet<string>> DatasetInfoColumnNames { get; }
 
@@ -62,10 +56,6 @@ namespace DMSDatasetRetriever
         /// <remarks>Old messages are cleared when ProcessFile is called</remarks>
         // ReSharper disable once CollectionNeverQueried.Global
         public List<string> WarningMessages { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -870,10 +860,6 @@ namespace DMSDatasetRetriever
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void FileCopyUtilityOnProgressUpdate(string progressMessage, float percentComplete)
         {
             var percentCompleteOverall = ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(0, 50, percentComplete);
@@ -885,7 +871,5 @@ namespace DMSDatasetRetriever
             var percentCompleteOverall = ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(50, 100, percentComplete);
             ReportProgress(progressMessage, percentComplete, percentCompleteOverall);
         }
-
-        #endregion
     }
 }

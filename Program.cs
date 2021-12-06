@@ -107,8 +107,6 @@ namespace DMSDatasetRetriever
             }
         }
 
-        #region "Event handlers"
-
         private static void Processor_DebugEvent(string message)
         {
             ConsoleMsgUtils.ShowDebugCustom(message, emptyLinesBeforeMessage: 0);
@@ -128,7 +126,5 @@ namespace DMSDatasetRetriever
         {
             ConsoleMsgUtils.ShowWarning(message);
         }
-
-        #endregion
     }
 }

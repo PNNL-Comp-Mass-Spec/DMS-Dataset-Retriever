@@ -10,8 +10,6 @@ namespace DMSDatasetRetriever
     {
         // Ignore Spelling: Downloader
 
-        #region "Properties"
-
         /// <summary>
         /// Dataset info
         /// </summary>
@@ -42,8 +40,6 @@ namespace DMSDatasetRetriever
         /// True if the file needs to be retrieved from MyEMSL
         /// </summary>
         public bool RetrieveFromMyEMSL { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor for copying a file

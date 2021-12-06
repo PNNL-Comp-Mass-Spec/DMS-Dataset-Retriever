@@ -51,8 +51,6 @@ namespace DMSDatasetRetriever
             Comment = 5
         }
 
-        #region "Properties"
-
         /// <summary>
         /// Base output directory (used when checksumFileMode is ChecksumFileType.MoTrPAC)
         /// </summary>
@@ -89,8 +87,6 @@ namespace DMSDatasetRetriever
         /// Keys are the file name (or relative file path), Values are the checksum details
         /// </summary>
         public Dictionary<string, FileChecksumInfo> DataFileChecksums { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor
