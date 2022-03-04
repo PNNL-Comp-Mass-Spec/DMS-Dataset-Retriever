@@ -444,7 +444,7 @@ namespace DMSDatasetRetriever
                     }
                     else
                     {
-                        checksumFileDirectory = dataset.TargetDirectoryFiles.First().Directory;
+                        checksumFileDirectory = dataset.TargetDirectoryFiles[0].Directory;
                     }
 
                     var checksumFileUpdater = GetChecksumUpdater(checksumData, checksumFileDirectory, baseOutputDirectoryPath);

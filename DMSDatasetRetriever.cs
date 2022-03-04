@@ -291,7 +291,7 @@ namespace DMSDatasetRetriever
 
             OnDebugEvent(
                 "Querying {0}, Dataset IDs {1}-{2}",
-                "V_Dataset_Files_List_Report", datasetIDs.First(), datasetIDs.Last());
+                "V_Dataset_Files_List_Report", datasetIDs[0], datasetIDs.Last());
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount: 2);
 
@@ -363,9 +363,16 @@ namespace DMSDatasetRetriever
                 "      V_Instrument_List_Export InstList ON DE.Instrument = InstList.Name" +
                 " WHERE DFP.Dataset IN (" + datasetNameList + ")";
 
-            OnDebugEvent(
-                "Querying {0}, Dataset {1}",
-                "V_Dataset_Folder_Paths", quotedDatasetNames.First().Replace("\'", string.Empty));
+            if (quotedDatasetNames.Count == 0)
+            {
+                OnWarningEvent("quotedDatasetNames is empty in GetDatasetFolderPathInfo; this is unexpected");
+            }
+            else
+            {
+                OnDebugEvent(
+                    "Querying {0}, Dataset {1}",
+                    "V_Dataset_Folder_Paths", quotedDatasetNames[0].Replace("\'", string.Empty));
+            }
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount: 2);
 
