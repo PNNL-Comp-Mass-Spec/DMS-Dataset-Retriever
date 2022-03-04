@@ -5,3 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("Roslynator", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:DMSDatasetRetriever.FileHashUtility.CreateUploadBatchFile(System.Collections.Generic.IReadOnlyDictionary{System.String,DMSDatasetRetriever.ChecksumFileUpdater},System.String)~System.Boolean")]

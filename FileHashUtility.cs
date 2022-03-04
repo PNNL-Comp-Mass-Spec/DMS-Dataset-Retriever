@@ -704,6 +704,15 @@ namespace DMSDatasetRetriever
                 // Format the commands to align on gs://
                 AlignUploadCommands(uploadCommands);
 
+                // Assure that the target directory exists
+                var batchFile = new FileInfo(uploadBatchFilePath);
+
+                // ReSharper disable once MergeIntoPattern
+                if (batchFile.Directory != null && !batchFile.Directory.Exists)
+                {
+                    batchFile.Directory.Create();
+                }
+
                 using var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
                 foreach (var item in uploadCommands)
