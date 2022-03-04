@@ -341,7 +341,6 @@ namespace DMSDatasetRetriever
 
                 foreach (var checksumFile in checksumFiles)
                 {
-
                     using var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                     var linesRead = 0;

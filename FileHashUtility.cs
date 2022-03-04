@@ -13,7 +13,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class FileHashUtility : EventNotifier
     {
-        // Ignore Spelling: cmd, gsutil, Foreach, cp
+        // Ignore Spelling: cmd, cp, Foreach, gsutil
 
         /// <summary>
         /// Retrieval options
