@@ -158,7 +158,7 @@ namespace DMSDatasetRetriever
                         DMSDatasetRetriever.GetCountWithUnits(datasetCountToCopy, "dataset", "datasets"),
                         FileTools.BytesToHumanReadable(TotalBytesToCopy));
 
-                    OnStatusEvent("Target directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
+                    OnStatusEvent("Target directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 200));
                     Console.WriteLine();
                 }
 

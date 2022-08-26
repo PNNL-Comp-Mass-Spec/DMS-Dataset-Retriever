@@ -749,11 +749,11 @@ namespace DMSDatasetRetriever
                 {
                     if (Options.PreviewMode)
                     {
-                        OnStatusEvent("Preview create directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
+                        OnStatusEvent("Preview create directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 200));
                     }
                     else
                     {
-                        OnStatusEvent("Creating the output directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 100));
+                        OnStatusEvent("Creating the output directory: " + PathUtils.CompactPathString(outputDirectory.FullName, 200));
                         outputDirectory.Create();
                     }
                 }
