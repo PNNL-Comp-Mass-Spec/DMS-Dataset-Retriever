@@ -556,12 +556,22 @@ namespace DMSDatasetRetriever
             return value != 0;
         }
 
-        private bool LoadDatasetInfoFile(string datasetInfoFilePath, out List<DatasetInfo> datasetList)
+        private bool LoadDatasetInfoFile(string datasetInfoFilePath, string outputDirectoryPath, out List<DatasetInfo> datasetList)
         {
             datasetList = new List<DatasetInfo>();
 
             try
             {
+                var outputDirectoryParts = new List<string>();
+
+                if (Path.IsPathRooted(outputDirectoryPath))
+                {
+                    // Assure that outputDirectoryPath path uses Windows slashes and does not end in a backslash
+                    outputDirectoryPath = ChecksumFileUpdater.UpdatePathSeparators(outputDirectoryPath, false).TrimEnd('\\');
+
+                    outputDirectoryParts.AddRange(outputDirectoryPath.Split('\\'));
+                }
+
                 if (string.IsNullOrWhiteSpace(datasetInfoFilePath))
                 {
                     ReportWarning("Dataset info file path is undefined; cannot continue");
@@ -613,6 +623,28 @@ namespace DMSDatasetRetriever
                     var targetName = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetName, string.Empty);
                     var targetDirectory = DataTableUtils.GetColumnValue(rowData, columnMap, DatasetInfoColumns.TargetDirectory, string.Empty);
 
+                    // ReSharper disable CommentTypo
+
+                    // The parameter file defines the output directory path, e.g.
+                    // OutputDirectory=F:\Upload\Upload_MoTrPAC\2022August_PASS1A-06\PASS1A-06\T59\PROT_PH\BATCH1_20220826\
+
+                    // Ideally, the dataset info file will have relative paths to append to the output directory path, e.g.
+                    // RAW_20220826\01MOTRPAC_PASS1A-06_T59_PH_PN_20220826
+                    // RAW_20220826\02MOTRPAC_PASS1A-06_T59_PH_PN_20220826
+                    // RAW_20220826\03MOTRPAC_PASS1A-06_T59_PH_PN_20220826
+
+                    // However, if the target directory column in the dataset info file includes additional parent directories, the final output path will be invalid
+                    // Examples:
+                    // PASS1A-06\T59\PROT_PH\BATCH1_20220826\RAW_20220826\01MOTRPAC_PASS1A-06_T59_PH_PN_20220826
+                    // PASS1A-06\T59\PROT_PH\BATCH1_20220826\RAW_20220826\02MOTRPAC_PASS1A-06_T59_PH_PN_20220826
+                    // PASS1A-06\T59\PROT_PH\BATCH1_20220826\RAW_20220826\03MOTRPAC_PASS1A-06_T59_PH_PN_20220826
+
+                    // ReSharper restore CommentTypo
+
+                    // The following method checks for this situation, and will shorten targetDirectory to remove the overlapping portion of the path (if an overlap exists)
+
+                    var relativeTargetDirectory = PruneRelativeDirectoryIfOverlap(outputDirectoryParts, targetDirectory);
+
                     if (string.IsNullOrWhiteSpace(datasetName))
                     {
                         ReportWarning("Skipping line with empty dataset name: " + dataLine);
@@ -621,7 +653,7 @@ namespace DMSDatasetRetriever
                     var datasetInfo = new DatasetInfo(datasetName)
                     {
                         TargetDatasetName = targetName,
-                        TargetDirectory = targetDirectory
+                        TargetDirectory = relativeTargetDirectory
                     };
 
                     datasetList.Add(datasetInfo);
@@ -697,6 +729,70 @@ namespace DMSDatasetRetriever
             }
         }
 
+        /// <summary>
+        /// Compare directory names in relativeDirectoryPath to the directory names in outputDirectoryParts
+        /// If there is overlap, remove the overlapping directories and return an updated relative directory path
+        /// </summary>
+        /// <param name="outputDirectoryParts">List of directory names, obtained using outputDirectoryPath.Split('\\')</param>
+        /// <param name="relativeDirectoryPath">Relative (non-rooted) directory to examine</param>
+        /// <returns>Updated relative directory path if overlap, otherwise the original path</returns>
+        private string PruneRelativeDirectoryIfOverlap(IReadOnlyList<string> outputDirectoryParts, string relativeDirectoryPath)
+        {
+            // Assure that relativeDirectoryPath path uses Windows slashes and does not end in a backslash
+            relativeDirectoryPath = ChecksumFileUpdater.UpdatePathSeparators(relativeDirectoryPath, false).TrimEnd('\\');
+
+            // If the target directory overlaps with the output directory path, remove the extra directories
+            var targetDirectoryParts = new List<string>();
+            targetDirectoryParts.AddRange(relativeDirectoryPath.Split('\\'));
+
+            var directoriesToPrune = new List<string>();
+            var candidateRelativePathsToPrune = new List<string>();
+
+            for (var i = outputDirectoryParts.Count; i > 0; i--)
+            {
+                directoriesToPrune.Clear();
+
+                for (var j = 0; j < targetDirectoryParts.Count && i + j < outputDirectoryParts.Count; j++)
+                {
+                    if (outputDirectoryParts[i + j].Equals(targetDirectoryParts[j], StringComparison.OrdinalIgnoreCase))
+                    {
+                        directoriesToPrune.Add(targetDirectoryParts[j]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if (directoriesToPrune.Count > 0)
+                {
+                    candidateRelativePathsToPrune.Add(string.Join("\\", directoriesToPrune));
+                }
+            }
+
+            switch (candidateRelativePathsToPrune.Count)
+            {
+                case 0:
+                    return relativeDirectoryPath;
+
+                case 1:
+                    return relativeDirectoryPath.Substring(candidateRelativePathsToPrune[0].Length + 1);
+
+                default:
+                {
+                    // Find the longest entry in candidateRelativePathsToPrune
+                    // (from https://stackoverflow.com/a/7975983/1179467)
+
+                    var pathToPrune = candidateRelativePathsToPrune.Aggregate(string.Empty, (max, cur) => max.Length > cur.Length ? max : cur);
+
+                    // Second, easier to read option:
+                    // pathToPrune = list.OrderByDescending(s => s.Length).First();
+
+                    return relativeDirectoryPath.Substring(pathToPrune.Length + 1);
+                }
+            }
+        }
+
         private void ReportError(string message, Exception ex)
         {
             OnErrorEvent(message, ex);
@@ -738,7 +834,7 @@ namespace DMSDatasetRetriever
                     outputDirectoryPath = ChecksumFileUpdater.UpdatePathSeparators(outputDirectoryPath, false).TrimEnd('\\');
                 }
 
-                var datasetInfoLoaded = LoadDatasetInfoFile(datasetInfoFilePath, out var datasetList);
+                var datasetInfoLoaded = LoadDatasetInfoFile(datasetInfoFilePath, outputDirectoryPath, out var datasetList);
                 if (!datasetInfoLoaded)
                     return false;
 
