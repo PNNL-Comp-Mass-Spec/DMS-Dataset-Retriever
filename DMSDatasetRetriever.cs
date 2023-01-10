@@ -14,7 +14,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DMSDatasetRetriever : EventNotifier
     {
-        // Ignore Spelling: Purgable
+        // Ignore Spelling: purgeable
 
         private enum DatasetInfoColumns
         {
@@ -278,16 +278,16 @@ namespace DMSDatasetRetriever
 
             var columns = new List<string>
                     {
-                        "Dataset_ID",
-                        "File_Hash",
-                        "File_Size_Bytes",
-                        "File_Path"
+                        "dataset_id",
+                        "file_hash",
+                        "file_size_bytes",
+                        "file_path"
                     };
 
             var sqlQuery =
                 " SELECT " + string.Join(", ", columns) +
                 " FROM V_Dataset_Files_List_Report" +
-                " WHERE Dataset_ID IN (" + datasetIdList + ")";
+                " WHERE dataset_id IN (" + datasetIdList + ")";
 
             OnDebugEvent(
                 "Querying {0}, Dataset IDs {1}-{2}",
@@ -305,10 +305,10 @@ namespace DMSDatasetRetriever
 
             foreach (var resultRow in queryResults)
             {
-                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_ID", -1);
-                var fileHash = dbTools.GetColumnValue(resultRow, columnMap, "File_Hash");
-                var fileSizeBytes = dbTools.GetColumnValue(resultRow, columnMap, "File_Size_Bytes", (long)0);
-                var fileNameOrPath = dbTools.GetColumnValue(resultRow, columnMap, "File_Path");
+                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "dataset_id", -1);
+                var fileHash = dbTools.GetColumnValue(resultRow, columnMap, "file_hash");
+                var fileSizeBytes = dbTools.GetColumnValue(resultRow, columnMap, "file_size_bytes", (long)0);
+                var fileNameOrPath = dbTools.GetColumnValue(resultRow, columnMap, "file_path");
 
                 if (!datasetIDInfoMap.TryGetValue(datasetId, out var datasetInfo))
                 {
@@ -347,21 +347,21 @@ namespace DMSDatasetRetriever
 
             var columns = new List<string>
                     {
-                        "DFP.Dataset",
-                        "DFP.Dataset_ID",
-                        "DFP.Dataset_Folder_Path",
-                        "DFP.Archive_Folder_Path",
-                        "DFP.Instrument_Data_Purged",
-                        "DE.MyEMSLState",
-                        "InstList.Class AS Instrument_Class"
+                        "DFP.dataset",
+                        "DFP.dataset_id",
+                        "DFP.dataset_folder_path",
+                        "DFP.archive_folder_path",
+                        "DFP.instrument_data_purged",
+                        "DE.myemsl_state",
+                        "InstList.class AS instrument_class"
                     };
 
             var sqlQuery =
                 " SELECT " + string.Join(", ", columns) +
                 " FROM V_Dataset_Folder_Paths DFP INNER JOIN" +
-                "      V_Dataset_Export DE ON DFP.Dataset_ID = DE.ID INNER JOIN " +
-                "      V_Instrument_List_Export InstList ON DE.Instrument = InstList.Name" +
-                " WHERE DFP.Dataset IN (" + datasetNameList + ")";
+                "      V_Dataset_Export DE ON DFP.dataset_id = DE.id INNER JOIN " +
+                "      V_Instrument_List_Export InstList ON DE.instrument = InstList.name" +
+                " WHERE DFP.dataset IN (" + datasetNameList + ")";
 
             if (quotedDatasetNames.Count == 0)
             {
@@ -386,7 +386,7 @@ namespace DMSDatasetRetriever
 
             foreach (var resultRow in queryResults)
             {
-                var datasetName = dbTools.GetColumnValue(resultRow, columnMap, "Dataset");
+                var datasetName = dbTools.GetColumnValue(resultRow, columnMap, "dataset");
 
                 if (!datasetNameInfoMap.TryGetValue(datasetName, out var datasetInfo))
                 {
@@ -395,21 +395,21 @@ namespace DMSDatasetRetriever
                     continue;
                 }
 
-                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_ID", -1);
+                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "dataset_id", -1);
                 if (datasetId > 0)
                 {
                     datasetInfo.DatasetID = datasetId;
                 }
 
-                datasetInfo.InstrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Class");
+                datasetInfo.InstrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "instrument_class");
 
-                datasetInfo.DatasetDirectoryPath = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_Folder_Path");
-                datasetInfo.DatasetArchivePath = dbTools.GetColumnValue(resultRow, columnMap, "Archive_Folder_Path");
+                datasetInfo.DatasetDirectoryPath = dbTools.GetColumnValue(resultRow, columnMap, "dataset_folder_path");
+                datasetInfo.DatasetArchivePath = dbTools.GetColumnValue(resultRow, columnMap, "archive_folder_path");
 
-                var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Data_Purged", 0);
+                var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMap, "instrument_data_purged", 0);
                 datasetInfo.InstrumentDataPurged = IntToBool(instrumentDataPurged);
 
-                var myEmslState = dbTools.GetColumnValue(resultRow, columnMap, "MyEMSLState", 0);
+                var myEmslState = dbTools.GetColumnValue(resultRow, columnMap, "myemsl_state", 0);
                 datasetInfo.DatasetInMyEMSL = IntToBool(myEmslState);
             }
 
@@ -686,10 +686,10 @@ namespace DMSDatasetRetriever
             {
                 var columns = new List<string>
                     {
-                        "Instrument_Class",
-                        "Is_Purgable",
-                        "Raw_Data_Type",
-                        "Comment"
+                        "instrument_class",
+                        "is_purgeable",
+                        "raw_data_type",
+                        "comment"
                     };
 
                 var sqlQuery =
@@ -710,12 +710,12 @@ namespace DMSDatasetRetriever
 
                 foreach (var resultRow in queryResults)
                 {
-                    var instrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Class");
-                    var isPurgable = dbTools.GetColumnValue(resultRow, columnMap, "Is_Purgable", 0);
-                    var rawDataTypeName = dbTools.GetColumnValue(resultRow, columnMap, "Raw_Data_Type");
-                    var comment = dbTools.GetColumnValue(resultRow, columnMap, "Comment");
+                    var instrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "instrument_class");
+                    var isPurgeable = dbTools.GetColumnValue(resultRow, columnMap, "is_purgeable", 0);
+                    var rawDataTypeName = dbTools.GetColumnValue(resultRow, columnMap, "raw_data_type");
+                    var comment = dbTools.GetColumnValue(resultRow, columnMap, "comment");
 
-                    var instrumentClassInfo = new InstrumentClassInfo(instrumentClassName, rawDataTypeName, IntToBool(isPurgable), comment);
+                    var instrumentClassInfo = new InstrumentClassInfo(instrumentClassName, rawDataTypeName, IntToBool(isPurgeable), comment);
 
                     InstrumentClassData[instrumentClassName] = instrumentClassInfo;
                 }
