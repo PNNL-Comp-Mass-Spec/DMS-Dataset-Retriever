@@ -39,8 +39,9 @@
     <Reference Include="MyEMSLReader">
       <HintPath>Lib\MyEMSLReader.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica.Core">
-      <HintPath>Lib\Pacifica.Core.dll</HintPath>
+    <Reference Include="Pacifica, Version=2.1.31.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Lib\Pacifica.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -69,8 +70,8 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="jayrock-json">
-      <Version>0.9.16530.1</Version>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.2</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
       <Version>1.2.0</Version>
