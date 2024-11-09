@@ -10,7 +10,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DatasetRetrieverOptions
     {
-        // Ignore Spelling: motrpac, pnnl, yyyy, conf, YYYYMMDD, yyyy-MM-dd
+        // Ignore Spelling: app, motrpac, pnnl, yyyy, conf, YYYYMMDD, yyyy-MM-dd
 
         /// <summary>
         /// Program date
