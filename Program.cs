@@ -25,7 +25,7 @@ namespace DMSDatasetRetriever
 
                 ContactInfo = "Program written by Matthew Monroe for PNNL (Richland, WA)" + Environment.NewLine +
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                              "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
+                              "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://www.pnnl.gov/integrative-omics",
 
                 UsageExamples = {
                     exeName + " DatasetInfoFile.txt",
@@ -50,7 +50,7 @@ namespace DMSDatasetRetriever
                         return 0;
                     }
 
-                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                    // Delay for 1500 msec in case the user double-clicked this file from within Windows Explorer (or started the program via a shortcut)
                     // Error messages should have already been shown to the user
                     Thread.Sleep(1500);
                     return -1;
