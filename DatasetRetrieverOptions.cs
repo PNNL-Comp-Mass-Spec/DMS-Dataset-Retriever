@@ -118,11 +118,12 @@ namespace DMSDatasetRetriever
         /// </summary>
         /// <remarks>
         /// The default, which uses Server, Database, and Trusted_Connection, is equivalent to
-        /// "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI"
+        /// Postgres:   host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=dmsreader;Password=dms4fun
+        /// SQL Server: Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI
         /// </remarks>
         [Option("DMSConnectionString", "ConnectionString", "CN", HelpShowsDefault = false,
             HelpText = "DMS database connection string")]
-        public string DMSConnectionString { get; set; } = "Server=gigasax;Database=DMS5;Trusted_Connection=yes";
+        public string DMSConnectionString { get; set; } = "host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=dmsreader;Password=dms4fun";
 
         /// <summary>
         /// Number of parent directories to traverse up when finding additional text files to upload
