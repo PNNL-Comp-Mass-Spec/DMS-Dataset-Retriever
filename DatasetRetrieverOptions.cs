@@ -15,7 +15,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "August 26, 2022";
+        public const string PROGRAM_DATE = "March 24, 2025";
 
         /// <summary>
         /// Checksum file modes
@@ -123,7 +123,7 @@ namespace DMSDatasetRetriever
         /// </remarks>
         [Option("DMSConnectionString", "ConnectionString", "CN", HelpShowsDefault = false,
             HelpText = "DMS database connection string")]
-        public string DMSConnectionString { get; set; } = "host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=dmsreader;Password=dms4fun";
+        public string DMSConnectionString { get; set; } = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=dmsreader;Password=dms4fun";
 
         /// <summary>
         /// Number of parent directories to traverse up when finding additional text files to upload
