@@ -45,6 +45,7 @@ namespace DMSDatasetRetriever
             DatasetFileOrDirectory sourceDirectoryInfo)
         {
             var sourceDirectory = new DirectoryInfo(sourceDirectoryInfo.SourcePath);
+
             if (!sourceDirectory.Exists)
                 return;
 
@@ -80,6 +81,7 @@ namespace DMSDatasetRetriever
         private void ComputeTotalBytesAddFileIfMissing(FileSystemInfo outputDirectory, DatasetFileOrDirectory sourceItem)
         {
             var sourceFile = new FileInfo(sourceItem.SourcePath);
+
             if (!sourceFile.Exists)
                 return;
 
@@ -106,6 +108,7 @@ namespace DMSDatasetRetriever
             foreach (var sourceDataset in sourceFilesByDataset)
             {
                 var datasetInfo = sourceDataset.Key;
+
                 foreach (var sourceItem in sourceDataset.Value)
                 {
                     if (sourceItem.IsDirectory)
@@ -138,6 +141,7 @@ namespace DMSDatasetRetriever
             try
             {
                 int debugLevel;
+
                 if (Options.VerboseMode)
                     debugLevel = 2;
                 else
@@ -151,6 +155,7 @@ namespace DMSDatasetRetriever
                 var lastProgressTime = DateTime.UtcNow;
 
                 Console.WriteLine();
+
                 if (datasetCountToCopy > 0)
                 {
                     OnStatusEvent(
@@ -165,6 +170,7 @@ namespace DMSDatasetRetriever
                 foreach (var sourceDataset in sourceFilesByDataset)
                 {
                     var datasetInfo = sourceDataset.Key;
+
                     foreach (var sourceItem in sourceDataset.Value)
                     {
                         if (sourceItem.IsDirectory)
@@ -269,6 +275,7 @@ namespace DMSDatasetRetriever
                 var sourceFile = new FileInfo(sourceFileInfo.SourcePath);
 
                 string linkFileSuffix;
+
                 if (Options.UseDatasetLinkFiles)
                     linkFileSuffix = LINK_FILE_SUFFIX;
                 else
@@ -323,6 +330,7 @@ namespace DMSDatasetRetriever
                 else
                 {
                     Console.WriteLine();
+
                     if (Options.UseDatasetLinkFiles)
                     {
                         CreateLinkFile(sourceFile, targetFile);
@@ -333,6 +341,7 @@ namespace DMSDatasetRetriever
                         OnStatusEvent("Retrieving " + PathUtils.CompactPathString(sourceFile.FullName, 100));
 
                         var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
+
                         if (copySuccess)
                         {
                             BytesCopied += sourceFile.Length;

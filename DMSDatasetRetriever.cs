@@ -83,6 +83,7 @@ namespace DMSDatasetRetriever
                 // Keys in filesToCopy are dataset info objects
                 // Values are the list of files (or directories) to copy
                 var searchSuccess = FindSourceFiles(dbTools, datasetList, out var sourceFilesByDataset);
+
                 if (!searchSuccess)
                     return false;
 
@@ -168,6 +169,7 @@ namespace DMSDatasetRetriever
                     if (string.IsNullOrWhiteSpace(dataset.DatasetFileName))
                     {
                         sourceItem = GetDefaultInstrumentFileOrDirectory(dbTools, dataset);
+
                         if (sourceItem == null)
                             continue;
                     }
@@ -231,11 +233,13 @@ namespace DMSDatasetRetriever
 
                     // Lookup dataset directory information
                     var success = GetDatasetFolderPathInfo(dbTools, datasetBatch);
+
                     if (!success)
                         return false;
 
                     // Now lookup SHA-1 checksums
                     var hashInfoSuccess = GetDatasetFileHashInfo(dbTools, datasetBatch);
+
                     if (!hashInfoSuccess)
                         return false;
                 }
@@ -429,6 +433,7 @@ namespace DMSDatasetRetriever
             if (InstrumentClassData.Count == 0)
             {
                 var classInfoLoaded = LoadInstrumentClassData(dbTools);
+
                 if (!classInfoLoaded)
                 {
                     ReportWarning("Unable to load data from V_Instrument_Class_Export; cannot auto-determine the instrument file name");
@@ -482,6 +487,7 @@ namespace DMSDatasetRetriever
         private string GetRelativeTargetPath(FileSystemInfo sourceItem, string targetDatasetName, string datasetTargetDirectory)
         {
             string relativeTargetPath;
+
             if (sourceItem is FileInfo sourceFile)
             {
                 if (string.IsNullOrWhiteSpace(targetDatasetName))
@@ -579,6 +585,7 @@ namespace DMSDatasetRetriever
                 }
 
                 var datasetInfoFile = new FileInfo(datasetInfoFilePath);
+
                 if (!datasetInfoFile.Exists)
                 {
                     ReportWarning("Dataset info file not found: " + datasetInfoFile.FullName);
@@ -592,12 +599,14 @@ namespace DMSDatasetRetriever
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
                     if (columnMap.Count == 0)
                     {
                         var headerLineParsed = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, dataLine, DatasetInfoColumnNames);
+
                         if (!headerLineParsed)
                         {
                             ReportWarning("No valid column names were found in the header line of the dataset info file; unable to continue");
@@ -735,7 +744,7 @@ namespace DMSDatasetRetriever
         /// </summary>
         /// <param name="outputDirectoryParts">List of directory names, obtained using outputDirectoryPath.Split('\\')</param>
         /// <param name="relativeDirectoryPath">Relative (non-rooted) directory to examine</param>
-        /// <returns>Updated relative directory path if overlap, otherwise the original path</returns>
+        /// <returns>Updated relative directory path if overlapped, otherwise the original path</returns>
         private string PruneRelativeDirectoryIfOverlap(IReadOnlyList<string> outputDirectoryParts, string relativeDirectoryPath)
         {
             // Assure that relativeDirectoryPath path uses Windows slashes and does not end in a backslash
@@ -835,12 +844,14 @@ namespace DMSDatasetRetriever
                 }
 
                 var datasetInfoLoaded = LoadDatasetInfoFile(datasetInfoFilePath, outputDirectoryPath, out var datasetList);
+
                 if (!datasetInfoLoaded)
                     return false;
 
                 Options.DatasetInfoFilePath = datasetInfoFilePath;
 
                 var outputDirectory = new DirectoryInfo(outputDirectoryPath);
+
                 if (!outputDirectory.Exists)
                 {
                     if (Options.PreviewMode)
@@ -924,6 +935,7 @@ namespace DMSDatasetRetriever
                     return false;
 
                 var copyFileSuccess = CopyDatasetFiles(dbTools, datasetList, outputDirectory);
+
                 if (!copyFileSuccess)
                     return false;
 

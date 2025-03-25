@@ -43,6 +43,7 @@ namespace DMSDatasetRetriever
             var directoryMatcher = new Regex("^[a-z]+://[^/]+/(?<Directories>.+)", RegexOptions.IgnoreCase);
 
             var match = directoryMatcher.Match(Options.RemoteUploadBaseURL);
+
             if (!match.Success)
             {
                 throw new Exception(
@@ -68,9 +69,11 @@ namespace DMSDatasetRetriever
         private void AlignUploadCommands(IList<string> uploadCommands)
         {
             var largestIndex = 0;
+
             foreach (var item in uploadCommands)
             {
                 var gsIndex = item.IndexOf(Options.RemoteUploadBaseURL, StringComparison.Ordinal);
+
                 if (gsIndex > largestIndex)
                     largestIndex = gsIndex;
             }
@@ -84,6 +87,7 @@ namespace DMSDatasetRetriever
             for (var i = 0; i < uploadCommands.Count; i++)
             {
                 var gsIndex = uploadCommands[i].IndexOf(Options.RemoteUploadBaseURL, StringComparison.Ordinal);
+
                 if (gsIndex < 0)
                     continue;
 
@@ -139,9 +143,11 @@ namespace DMSDatasetRetriever
             using var writer = new StreamWriter(new FileStream(checksumFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
 
             var dataValues = new List<string>();
+
             foreach (var item in newFiles)
             {
                 string relativeFilePath;
+
                 if (item.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
                 {
                     relativeFilePath = GetRelativeFilePath(item, baseOutputDirectoryPath);
@@ -194,6 +200,7 @@ namespace DMSDatasetRetriever
             string uploadCommand;
 
             var sourceFileToUse = GetLocalOrRemoteFile(dataFile);
+
             if (!sourceFileToUse.Exists)
             {
                 ConsoleMsgUtils.ShowWarning(
@@ -438,6 +445,7 @@ namespace DMSDatasetRetriever
                     }
 
                     DirectoryInfo checksumFileDirectory;
+
                     if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.MoTrPAC && baseOutputDirectoryPath.Length > 0)
                     {
                         checksumFileDirectory = new DirectoryInfo(baseOutputDirectoryPath);
@@ -479,6 +487,7 @@ namespace DMSDatasetRetriever
                     var progressAtEnd = (itemsProcessed + 1) * progressChunkSize;
 
                     var updateSuccess = CreateOrUpdateChecksumFile(item.Value, baseOutputDirectoryPath, progressAtStart, progressAtEnd);
+
                     if (updateSuccess)
                         successCount++;
 
@@ -609,6 +618,7 @@ namespace DMSDatasetRetriever
                 if (Options.PreviewMode)
                 {
                     OnStatusEvent("Would create " + uploadBatchFilePath);
+
                     if (!Path.IsPathRooted(uploadBatchFilePath))
                     {
                         var batchFileInfo = new FileInfo(uploadBatchFilePath);
@@ -663,6 +673,7 @@ namespace DMSDatasetRetriever
                     if (Options.ParentDirectoryDepth > 0)
                     {
                         var parentDirectory = item.Value.ChecksumFileDirectory.Parent;
+
                         for (var i = 2; i <= Options.ParentDirectoryDepth; i++)
                         {
                             if (parentDirectory == null)
@@ -760,6 +771,7 @@ namespace DMSDatasetRetriever
         private string GenerateRemoteUrl(string fullFilePath)
         {
             var charIndex = fullFilePath.LastIndexOf(RemoteUploadURLDirectoriesToMatch, StringComparison.OrdinalIgnoreCase);
+
             if (charIndex < 0)
             {
                 OnWarningEvent(
@@ -773,6 +785,7 @@ namespace DMSDatasetRetriever
                     return fullFilePath.Substring(3).Replace('\\', '/');
 
                 var slashIndex = fullFilePath.IndexOf('\\', 3);
+
                 if (slashIndex > 0 && slashIndex < fullFilePath.Length - 1)
                     return fullFilePath.Substring(slashIndex + 1).Replace('\\', '/');
 
@@ -780,6 +793,7 @@ namespace DMSDatasetRetriever
             }
 
             string remoteUrlBase;
+
             if (Options.RemoteUploadBaseURL.EndsWith("/"))
                 remoteUrlBase = Options.RemoteUploadBaseURL;
             else
@@ -819,6 +833,7 @@ namespace DMSDatasetRetriever
             }
 
             string relativeFilePath;
+
             if (dataFile.FullName.StartsWith(baseOutputDirectoryPath, StringComparison.OrdinalIgnoreCase))
             {
                 relativeFilePath = GetRelativeFilePath(dataFile, baseOutputDirectoryPath);
@@ -854,6 +869,7 @@ namespace DMSDatasetRetriever
             }
 
             var linkFile = new FileInfo(dataFile.FullName + FileCopyUtility.LINK_FILE_SUFFIX);
+
             if (linkFile.Exists)
             {
                 var remoteFilePath = GetRemotePathFromLinkFile(linkFile);

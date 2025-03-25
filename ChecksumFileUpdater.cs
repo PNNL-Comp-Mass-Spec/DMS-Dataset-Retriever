@@ -148,6 +148,7 @@ namespace DMSDatasetRetriever
                     // New behavior in 2021 is to create a single manifest file in the base output directory
 
                     string baseOutputDirectoryPath;
+
                     if (string.IsNullOrWhiteSpace(BaseOutputDirectoryPath))
                     {
                         if (ChecksumFileDirectory.Parent == null)
@@ -211,6 +212,7 @@ namespace DMSDatasetRetriever
                 }
 
                 var defaultChecksumFile = new FileInfo(ChecksumFilePath);
+
                 if (defaultChecksumFile.Directory == null)
                 {
                     OnWarningEvent(
@@ -251,6 +253,7 @@ namespace DMSDatasetRetriever
                 foreach (var directory in directoriesToCheck.Where(directory => directory.Exists))
                 {
                     var candidateChecksumFile = new FileInfo(Path.Combine(directory.FullName, defaultChecksumFile.Name));
+
                     if (candidateChecksumFile.Exists && candidateChecksumFile.Length > 0)
                     {
                         checksumFiles.Add(defaultChecksumFile);
@@ -344,9 +347,11 @@ namespace DMSDatasetRetriever
                     using var reader = new StreamReader(new FileStream(checksumFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -360,6 +365,7 @@ namespace DMSDatasetRetriever
                             var headerLine = string.Join("\t", lineParts);
 
                             var validHeaders = DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
+
                             if (!validHeaders)
                             {
                                 OnWarningEvent("The checksum file header line does not contain the expected columns:\n  " + dataLine);
@@ -396,6 +402,7 @@ namespace DMSDatasetRetriever
             var fileName = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename).Trim();
 
             string cleanFileName;
+
             if (fileName.StartsWith("*"))
                 cleanFileName = fileName.Substring(1);
             else
@@ -500,6 +507,7 @@ namespace DMSDatasetRetriever
             try
             {
                 var checksumFilePath = GetChecksumFilePath();
+
                 if (string.IsNullOrWhiteSpace(checksumFilePath))
                 {
                     if (ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
@@ -516,6 +524,7 @@ namespace DMSDatasetRetriever
                 }
 
                 var checksumFile = new FileInfo(checksumFilePath);
+
                 if (checksumFile.Exists)
                 {
                     OnDebugEvent("Updating existing checksum file: " + PathUtils.CompactPathString(checksumFilePath, 100));
@@ -582,6 +591,7 @@ namespace DMSDatasetRetriever
             {
                 case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
                     string relativeFilePath;
+
                     if (dataFileInfo.RelativeFilePath.Contains('/'))
                     {
                         // We already have a Linux-style relative file path; use as-is
@@ -597,6 +607,7 @@ namespace DMSDatasetRetriever
                         var baseOutputDirectoryPath = new DirectoryInfo(BaseOutputDirectoryPath);
 
                         string baseOutputDirectoryParent;
+
                         if (baseOutputDirectoryPath.Parent == null)
                         {
                             OnWarningEvent("Cannot determine the parent directory of the base output directory; this is unexpected: " + BaseOutputDirectoryPath);
