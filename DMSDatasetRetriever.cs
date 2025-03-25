@@ -724,9 +724,10 @@ namespace DMSDatasetRetriever
                     var rawDataTypeName = dbTools.GetColumnValue(resultRow, columnMap, "raw_data_type");
                     var comment = dbTools.GetColumnValue(resultRow, columnMap, "comment");
 
-                    var instrumentClassInfo = new InstrumentClassInfo(instrumentClassName, rawDataTypeName, IntToBool(isPurgeable), comment);
-
-                    InstrumentClassData[instrumentClassName] = instrumentClassInfo;
+                    InstrumentClassData[instrumentClassName] = new InstrumentClassInfo(
+                        instrumentClassName,
+                        rawDataTypeName,
+                        IntToBool(isPurgeable), comment);
                 }
 
                 return true;
