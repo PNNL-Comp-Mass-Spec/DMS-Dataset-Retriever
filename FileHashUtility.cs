@@ -555,7 +555,16 @@ namespace DMSDatasetRetriever
                     ? string.Empty
                     : string.Format("_{0}", Path.GetFileNameWithoutExtension(Options.DatasetInfoFilePath));
 
-                var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}{1}.bat", DateTime.Now, batchFileNameSuffix);
+                var currentTime = DateTime.Now;
+
+                // If the time of day is between midnight and 7:00 am, use yesterday's date in the batch file name,
+                // since the data processing may have been started yesterday evening
+
+                var timestampToUse = currentTime.Hour is >= 0 and < 7
+                    ? currentTime.Subtract(new TimeSpan(1, 0, 0, 0))
+                    : currentTime;
+
+                var batchFileName = string.Format("UploadFiles_{0:yyyy-MM-dd}{1}.bat", timestampToUse, batchFileNameSuffix);
 
                 string uploadBatchFilePath;
 
