@@ -49,8 +49,6 @@ namespace DMSDatasetRetriever
             if (!sourceDirectory.Exists)
                 return;
 
-            // ToDo: Validate this code
-
             foreach (var sourceFile in sourceDirectory.GetFiles())
             {
                 // RelativeTargetPath should have the target directory name, possibly preceded by a subdirectory name
@@ -217,8 +215,6 @@ namespace DMSDatasetRetriever
                     OnWarningEvent("Directory not found, nothing to copy: " + sourceDirectory.FullName);
                     return;
                 }
-
-                // ToDo: Validate this code
 
                 foreach (var sourceFile in sourceDirectory.GetFiles())
                 {
