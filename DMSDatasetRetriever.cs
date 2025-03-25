@@ -349,23 +349,7 @@ namespace DMSDatasetRetriever
 
             var datasetNameList = string.Join(", ", quotedDatasetNames);
 
-            var columns = new List<string>
-                    {
-                        "DFP.dataset",
-                        "DFP.dataset_id",
-                        "DFP.dataset_folder_path",
-                        "DFP.archive_folder_path",
-                        "DFP.instrument_data_purged",
-                        "DE.myemsl_state",
-                        "InstList.class AS instrument_class"
-                    };
-
-            var sqlQuery =
-                " SELECT " + string.Join(", ", columns) +
-                " FROM V_Dataset_Folder_Paths DFP INNER JOIN" +
-                "      V_Dataset_Export DE ON DFP.dataset_id = DE.id INNER JOIN " +
-                "      V_Instrument_List_Export InstList ON DE.instrument = InstList.name" +
-                " WHERE DFP.dataset IN (" + datasetNameList + ")";
+            var sqlQuery = GetDatasetInfoQuery(dbTools.DbServerType, datasetNameList, out var columnNames);
 
             if (quotedDatasetNames.Count == 0)
             {
@@ -390,30 +374,30 @@ namespace DMSDatasetRetriever
 
             foreach (var resultRow in queryResults)
             {
-                var datasetName = dbTools.GetColumnValue(resultRow, columnMap, "dataset");
+                var datasetName = dbTools.GetColumnValue(resultRow, columnMap, "Dataset");
 
                 if (!datasetNameInfoMap.TryGetValue(datasetName, out var datasetInfo))
                 {
-                    ReportWarning(string.Format(
-                        "Dataset {0} not found in datasetNameInfoMap (this is unexpected)", datasetName));
+                    ReportWarning(string.Format("Dataset {0} not found in datasetNameInfoMap (this is unexpected)", datasetName));
                     continue;
                 }
 
-                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "dataset_id", -1);
+                var datasetId = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_ID", -1);
+
                 if (datasetId > 0)
                 {
                     datasetInfo.DatasetID = datasetId;
                 }
 
-                datasetInfo.InstrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "instrument_class");
+                datasetInfo.InstrumentClassName = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_Class");
 
-                datasetInfo.DatasetDirectoryPath = dbTools.GetColumnValue(resultRow, columnMap, "dataset_folder_path");
-                datasetInfo.DatasetArchivePath = dbTools.GetColumnValue(resultRow, columnMap, "archive_folder_path");
+                datasetInfo.DatasetDirectoryPath = dbTools.GetColumnValue(resultRow, columnMap, "Dataset_Folder_Path");
+                datasetInfo.DatasetArchivePath = dbTools.GetColumnValue(resultRow, columnMap, "Archive_Folder_Path");
 
-                var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMap, "instrument_data_purged", 0);
+                var instrumentDataPurged = dbTools.GetColumnValue(resultRow, columnMap, "Instrument_data_purged", 0);
                 datasetInfo.InstrumentDataPurged = IntToBool(instrumentDataPurged);
 
-                var myEmslState = dbTools.GetColumnValue(resultRow, columnMap, "myemsl_state", 0);
+                var myEmslState = dbTools.GetColumnValue(resultRow, columnMap, "MyEMSL_State", 0);
                 datasetInfo.DatasetInMyEMSL = IntToBool(myEmslState);
             }
 
@@ -426,6 +410,45 @@ namespace DMSDatasetRetriever
             }
 
             return true;
+        }
+
+        private string GetDatasetInfoQuery(
+            DbServerTypes dbToolsDbServerType,
+            string datasetNameList,
+            out List<string> columnNames)
+        {
+            columnNames = new List<string>
+            {
+                "DFP.Dataset",
+                "DFP.Dataset_ID",
+                "DFP.Dataset_Folder_Path",
+                "DFP.Archive_Folder_Path",
+                "DFP.Instrument_data_purged",
+            };
+
+            if (dbToolsDbServerType == DbServerTypes.MSSQLServer)
+            {
+                columnNames.Add("DE.MyEMSL_State");
+                columnNames.Add("InstList.class AS Instrument_Class");
+
+                return
+                    " SELECT " + string.Join(", ", columnNames) +
+                    " FROM V_Dataset_Folder_Paths DFP" +
+                    "      INNER JOIN V_Dataset_Export DE ON DFP.dataset_id = DE.id" +
+                    "      INNER JOIN V_Instrument_List_Export InstList ON DE.instrument = InstList.name" +
+                    " WHERE DFP.dataset IN (" + datasetNameList + ")";
+            }
+
+            columnNames.Add("DA.MyEMSL_State");
+            columnNames.Add("InstList.class AS Instrument_Class");
+
+            return
+                " SELECT " + string.Join(", ", columnNames) +
+                " FROM V_Dataset_Folder_Paths DFP" +
+                "      INNER JOIN t_dataset DS ON DFP.dataset_id = DS.dataset_ID" +
+                "      INNER JOIN V_Instrument_List_Export InstList ON DS.instrument_id = InstList.id " +
+                "      LEFT OUTER JOIN t_dataset_archive DA ON DFP.dataset_id = DA.dataset_id" +
+                " WHERE DFP.dataset IN (" + datasetNameList + ")";
         }
 
         private FileSystemInfo GetDefaultInstrumentFileOrDirectory(IDBTools dbTools, DatasetInfo dataset)
