@@ -280,7 +280,7 @@ namespace DMSDatasetRetriever
                 return false;
             }
 
-            var columns = new List<string>
+            var columnNames = new List<string>
                     {
                         "dataset_id",
                         "file_hash",
@@ -289,7 +289,7 @@ namespace DMSDatasetRetriever
                     };
 
             var sqlQuery =
-                " SELECT " + string.Join(", ", columns) +
+                " SELECT " + string.Join(", ", columnNames) +
                 " FROM V_Dataset_Files_List_Report" +
                 " WHERE dataset_id IN (" + datasetIdList + ")";
 
@@ -305,7 +305,7 @@ namespace DMSDatasetRetriever
                 return false;
             }
 
-            var columnMap = dbTools.GetColumnMapping(columns);
+            var columnMap = dbTools.GetColumnMapping(columnNames);
 
             foreach (var resultRow in queryResults)
             {
@@ -386,7 +386,7 @@ namespace DMSDatasetRetriever
                 return false;
             }
 
-            var columnMap = dbTools.GetColumnMapping(columns);
+            var columnMap = dbTools.GetColumnMapping(columnNames);
 
             foreach (var resultRow in queryResults)
             {
@@ -693,7 +693,7 @@ namespace DMSDatasetRetriever
         {
             try
             {
-                var columns = new List<string>
+                var columnNames = new List<string>
                     {
                         "instrument_class",
                         "is_purgeable",
@@ -702,7 +702,7 @@ namespace DMSDatasetRetriever
                     };
 
                 var sqlQuery =
-                    " SELECT " + string.Join(", ", columns) +
+                    " SELECT " + string.Join(", ", columnNames) +
                     " FROM V_Instrument_Class_Export";
 
                 OnDebugEvent("Querying V_Instrument_Class_Export");
@@ -715,7 +715,7 @@ namespace DMSDatasetRetriever
                     return false;
                 }
 
-                var columnMap = dbTools.GetColumnMapping(columns);
+                var columnMap = dbTools.GetColumnMapping(columnNames);
 
                 foreach (var resultRow in queryResults)
                 {
