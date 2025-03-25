@@ -140,12 +140,7 @@ namespace DMSDatasetRetriever
         {
             try
             {
-                int debugLevel;
-
-                if (Options.VerboseMode)
-                    debugLevel = 2;
-                else
-                    debugLevel = 1;
+                var debugLevel = Options.VerboseMode ? 2 : 1;
 
                 var fileTools = new FileTools("DMSDatasetRetriever", debugLevel);
                 RegisterEvents(fileTools);

@@ -857,15 +857,10 @@ namespace DMSDatasetRetriever
                 ErrorMessages.Clear();
                 WarningMessages.Clear();
 
-                if (string.IsNullOrWhiteSpace(outputDirectoryPath))
-                {
-                    outputDirectoryPath = ".";
-                }
-                else
-                {
-                    // Assure that the output directory path uses Windows slashes and does not end in a backslash
-                    outputDirectoryPath = ChecksumFileUpdater.UpdatePathSeparators(outputDirectoryPath, false).TrimEnd('\\');
-                }
+                // Assure that the output directory path uses Windows slashes and does not end in a backslash
+                outputDirectoryPath = string.IsNullOrWhiteSpace(outputDirectoryPath)
+                    ? "."
+                    : ChecksumFileUpdater.UpdatePathSeparators(outputDirectoryPath, false).TrimEnd('\\');
 
                 var datasetInfoLoaded = LoadDatasetInfoFile(datasetInfoFilePath, outputDirectoryPath, out var datasetList);
 

@@ -682,8 +682,9 @@ namespace DMSDatasetRetriever
                             parentDirectory = parentDirectory.Parent;
                         }
 
-                        if (parentDirectory != null && !parentDirectoryPaths.Contains(parentDirectory.FullName))
+                        if (parentDirectory != null)
                         {
+                            // Add the directory path to the SortedSet (if not yet present)
                             parentDirectoryPaths.Add(parentDirectory.FullName);
                         }
                     }
