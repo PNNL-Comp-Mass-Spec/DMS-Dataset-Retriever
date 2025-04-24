@@ -736,6 +736,11 @@ namespace DMSDatasetRetriever
 
                 using var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
+                writer.WriteLine("@echo off");
+                writer.WriteLine("echo Login using \"gcloud auth login\"");
+                writer.WriteLine();
+                writer.WriteLine("@echo on");
+
                 foreach (var item in uploadCommands)
                 {
                     writer.WriteLine(item);
