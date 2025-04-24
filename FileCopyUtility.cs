@@ -16,6 +16,11 @@ namespace DMSDatasetRetriever
         public const string LINK_FILE_SUFFIX = ".dslink";
 
         /// <summary>
+        /// MyEMSL Reader
+        /// </summary>
+        private MyEMSLReader.Reader MyEMSLReader { get; }
+
+        /// <summary>
         /// Retrieval options
         /// </summary>
         private DatasetRetrieverOptions Options { get; }
@@ -36,6 +41,9 @@ namespace DMSDatasetRetriever
         /// <param name="options">Options</param>
         public FileCopyUtility(DatasetRetrieverOptions options)
         {
+            MyEMSLReader = new MyEMSLReader.Reader();
+            RegisterEvents(MyEMSLReader);
+
             Options = options;
         }
 
@@ -279,6 +287,16 @@ namespace DMSDatasetRetriever
 
                 if (!sourceFile.Exists)
                 {
+                    if (sourceFileInfo.RetrieveFromMyEMSL)
+                    {
+                        var success = RetrieveFileMyMyEMSL(fileTools, datasetInfo, sourceFileInfo, sourceFile, targetFile);
+
+                        if (success)
+                            return;
+
+                        OnWarningEvent("Unable to retrieve the file from MyEMSL: " + sourceFile.FullName);
+                    }
+
                     OnWarningEvent("File not found, nothing to copy: " + sourceFile.FullName);
                     return;
                 }
@@ -381,6 +399,107 @@ namespace DMSDatasetRetriever
             {
                 OnErrorEvent("Error in CreateLinkFile", ex);
             }
+        }
+
+        private bool RetrieveFileMyMyEMSL(
+            FileTools fileTools,
+            DatasetInfo datasetInfo,
+            DatasetFileOrDirectory sourceFileInfo,
+            FileSystemInfo sourceFile,
+            FileInfo targetFile)
+        {
+            if (Options.PreviewMode)
+            {
+                if (Options.UseDatasetLinkFiles)
+                {
+                    OnStatusEvent(
+                        "Preview query MyEMSL to create link file {0}\n  at {1}",
+                        FileTools.CompactPathString(sourceFile.Name, 100),
+                        FileTools.CompactPathString(targetFile.FullName, 120));
+                }
+                else
+                {
+                    OnStatusEvent(
+                        "Preview download {0} from MyEMSL\n  to {1}",
+                        FileTools.CompactPathString(sourceFile.Name, 100),
+                        FileTools.CompactPathString(targetFile.FullName, 120));
+                }
+
+                datasetInfo.TargetDirectoryFiles.Add(targetFile);
+                return true;
+            }
+
+            // Retrieve the file from MyEMSL and store locally
+            foreach (var remoteFile in MyEMSLReader.FindFilesByDatasetID(datasetInfo.DatasetID, string.Empty, false))
+            {
+                if (!remoteFile.Filename.Equals(sourceFile.Name, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Require that the drive will still have 5 GB of free space after downloading the file
+                var minimumFreeSpaceMB = 5120 + (long)Math.Round(remoteFile.FileSizeBytes / 1024.0 / 1024.0, 0);
+
+                var targetDirectory = Path.GetTempPath();
+                var sourceFileLocal = new FileInfo(Path.Combine(targetDirectory, sourceFile.Name));
+
+                var spaceAvailable = ValidateFreeDiskSpace(sourceFileLocal.FullName, minimumFreeSpaceMB);
+
+                if (!spaceAvailable)
+                {
+                    return false;
+                }
+
+                OnStatusEvent("Retrieving file {0} from MyEMSL for Dataset ID {1}", sourceFile.Name, datasetInfo.DatasetID);
+
+                RegisterEvents(sourceFileInfo.MyEMSLDownloader);
+
+                var filesToDownload = new Dictionary<long, MyEMSLReader.ArchivedFileInfo> {
+                    { remoteFile.FileID, remoteFile }
+                };
+
+                sourceFileInfo.MyEMSLDownloader.DownloadFiles(filesToDownload, targetDirectory);
+
+                CopyFileToTarget(fileTools, sourceFileLocal, targetFile);
+
+                targetFile.Refresh();
+                datasetInfo.TargetDirectoryFiles.Add(targetFile);
+
+                if (Options.UseDatasetLinkFiles)
+                {
+                    OnWarningEvent("After uploading the data to the target server, delete file {0}", sourceFileLocal.FullName);
+                }
+                else
+                {
+                    OnWarningEvent("Deleting file {0} since copied to {1}", sourceFileLocal.FullName, targetFile.Directory?.FullName);
+                    sourceFileLocal.Delete();
+                }
+
+                Console.WriteLine();
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ValidateFreeDiskSpace(string targetFilePath, long minimumFreeSpaceMB)
+        {
+            var success = PRISMWin.DiskInfo.GetDiskFreeSpace(targetFilePath, out var currentDiskFreeSpaceBytes, out var errorMessage);
+
+            if (!success)
+            {
+                OnErrorEvent("GetDiskFreeSpace reported false for " + targetFilePath + ": " + errorMessage);
+                return false;
+            }
+
+            var safeToCopy = FileTools.ValidateFreeDiskSpace(targetFilePath, minimumFreeSpaceMB, currentDiskFreeSpaceBytes, out _);
+
+            if (safeToCopy)
+                return true;
+
+            OnErrorEvent("Target drive has insufficient free space to copy {0} file {1}; {2} free",
+                FileTools.BytesToHumanReadable(minimumFreeSpaceMB * 1024 * 1024),
+                targetFilePath, FileTools.BytesToHumanReadable(currentDiskFreeSpaceBytes));
+
+            return false;
         }
     }
 }
