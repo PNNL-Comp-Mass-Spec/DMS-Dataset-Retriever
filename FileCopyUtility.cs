@@ -320,31 +320,7 @@ namespace DMSDatasetRetriever
                 }
                 else
                 {
-                    Console.WriteLine();
-
-                    if (Options.UseDatasetLinkFiles)
-                    {
-                        CreateLinkFile(sourceFile, targetFile);
-                        BytesCopied += sourceFile.Length;
-                    }
-                    else
-                    {
-                        OnStatusEvent("Retrieving " + PathUtils.CompactPathString(sourceFile.FullName, 100));
-
-                        var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
-
-                        if (copySuccess)
-                        {
-                            BytesCopied += sourceFile.Length;
-                        }
-                        else
-                        {
-                            OnDebugEvent(
-                                "Error copying {0} to {1}",
-                                sourceFile.FullName,
-                                PathUtils.CompactPathString(targetFile.FullName, 100));
-                        }
-                    }
+                    CopyFileToTarget(fileTools, sourceFile, targetFile);
                 }
 
                 targetFile.Refresh();
@@ -353,6 +329,35 @@ namespace DMSDatasetRetriever
             catch (Exception ex)
             {
                 OnErrorEvent("Error in CopyFileToTarget", ex);
+            }
+        }
+
+        private void CopyFileToTarget(FileTools fileTools, FileInfo sourceFile, FileInfo targetFile)
+        {
+            Console.WriteLine();
+
+            if (Options.UseDatasetLinkFiles)
+            {
+                CreateLinkFile(sourceFile, targetFile);
+                BytesCopied += sourceFile.Length;
+            }
+            else
+            {
+                OnStatusEvent("Retrieving " + PathUtils.CompactPathString(sourceFile.FullName, 100));
+
+                var copySuccess = fileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
+
+                if (copySuccess)
+                {
+                    BytesCopied += sourceFile.Length;
+                }
+                else
+                {
+                    OnDebugEvent(
+                        "Error copying {0} to {1}",
+                        sourceFile.FullName,
+                        PathUtils.CompactPathString(targetFile.FullName, 100));
+                }
             }
         }
 
