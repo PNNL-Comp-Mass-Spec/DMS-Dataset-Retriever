@@ -57,7 +57,7 @@ namespace DMSDatasetRetriever
             IsDirectory = false;
 
             MyEMSLDownloader = downloader;
-            RetrieveFromMyEMSL = (downloader != null);
+            RetrieveFromMyEMSL = downloader != null;
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace DMSDatasetRetriever
             RelativeTargetPath = relativeTargetPath;
 
             MyEMSLDownloader = downloader;
-            RetrieveFromMyEMSL = (downloader != null);
+            RetrieveFromMyEMSL = downloader != null;
         }
 
         /// <summary>
