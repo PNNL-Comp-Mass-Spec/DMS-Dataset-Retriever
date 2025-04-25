@@ -766,7 +766,8 @@ namespace DMSDatasetRetriever
 
                 writer.WriteLine();
                 writer.WriteLine("@echo off");
-
+                writer.WriteLine("echo.");
+                writer.WriteLine("echo.");
                 writer.WriteLine("echo After uploading the data to the target server, delete the following files from {0}", tempDirectoryFiles[0].Directory.FullName);
                 foreach (var file in tempDirectoryFiles)
                 {
