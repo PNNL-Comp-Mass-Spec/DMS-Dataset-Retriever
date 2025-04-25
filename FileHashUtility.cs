@@ -416,7 +416,11 @@ namespace DMSDatasetRetriever
         /// <param name="baseOutputDirectoryPath">
         /// Base output directory (used when checksumFileMode is ChecksumFileType.MoTrPAC)
         /// </param>
-        public bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList, string baseOutputDirectoryPath)
+        /// <param name="tempDirectoryFiles">List of instrument files copied to the user's temp directory</param>
+        public bool CreateChecksumFiles(
+            IEnumerable<DatasetInfo> datasetList,
+            string baseOutputDirectoryPath,
+            List<FileInfo> tempDirectoryFiles)
         {
             if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
             {
@@ -496,7 +500,7 @@ namespace DMSDatasetRetriever
 
                 var checksumSuccessOverall = (successCount == checksumData.Count);
 
-                var batchFileSuccess = CreateUploadBatchFile(checksumData, baseOutputDirectoryPath);
+                var batchFileSuccess = CreateUploadBatchFile(checksumData, baseOutputDirectoryPath, tempDirectoryFiles);
 
                 return checksumSuccessOverall && batchFileSuccess;
             }
@@ -535,7 +539,8 @@ namespace DMSDatasetRetriever
 
         private bool CreateUploadBatchFile(
             IReadOnlyDictionary<string, ChecksumFileUpdater> checksumData,
-            string baseOutputDirectoryPath)
+            string baseOutputDirectoryPath,
+            List<FileInfo> tempDirectoryFiles)
         {
             if (Options.ChecksumFileMode != DatasetRetrieverOptions.ChecksumFileType.MoTrPAC)
             {
@@ -737,7 +742,7 @@ namespace DMSDatasetRetriever
                 using var writer = new StreamWriter(new FileStream(uploadBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
                 writer.WriteLine("@echo off");
-                writer.WriteLine("echo Login using \"gcloud auth login\"");
+                writer.WriteLine("echo Login using \"gcloud auth login\" (for MoTrPAC, login as matthew.monroe@pnnl.gov)");
                 writer.WriteLine();
                 writer.WriteLine("@echo on");
 
@@ -752,6 +757,21 @@ namespace DMSDatasetRetriever
                 OnStatusEvent(
                     "{0} written to the batch file",
                     DMSDatasetRetriever.GetCountWithUnits(processedFiles.Count, "file upload command", "file upload commands"));
+
+                if (tempDirectoryFiles.Count == 0)
+                {
+                    Console.WriteLine();
+                    return true;
+                }
+
+                writer.WriteLine();
+                writer.WriteLine("@echo off");
+
+                writer.WriteLine("echo After uploading the data to the target server, delete the following files from {0}", tempDirectoryFiles[0].Directory.FullName);
+                foreach (var file in tempDirectoryFiles)
+                {
+                    writer.WriteLine("echo   {0}", file.Name);
+                }
 
                 Console.WriteLine();
                 return true;

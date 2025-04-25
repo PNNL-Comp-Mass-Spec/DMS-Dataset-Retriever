@@ -26,6 +26,11 @@ namespace DMSDatasetRetriever
         private DatasetRetrieverOptions Options { get; }
 
         /// <summary>
+        /// List of instrument files copied to the user's temp directory
+        /// </summary>
+        public List<FileInfo> TempDirectoryFilesToDelete { get; }
+
+        /// <summary>
         /// Total bytes to copy
         /// </summary>
         public long TotalBytesToCopy { get; private set; }
@@ -45,6 +50,7 @@ namespace DMSDatasetRetriever
             RegisterEvents(MyEMSLReader);
 
             Options = options;
+            TempDirectoryFilesToDelete = new List<FileInfo>();
         }
 
         private void ComputeTotalBytesAddDirectory(
@@ -466,6 +472,7 @@ namespace DMSDatasetRetriever
                 if (Options.UseDatasetLinkFiles)
                 {
                     OnWarningEvent("After uploading the data to the target server, delete file {0}", sourceFileLocal.FullName);
+                    TempDirectoryFilesToDelete.Add(sourceFileLocal);
                 }
                 else
                 {

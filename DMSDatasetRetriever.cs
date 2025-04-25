@@ -76,7 +76,11 @@ namespace DMSDatasetRetriever
             InitializeDatasetInfoFileColumns();
         }
 
-        private bool CopyDatasetFiles(IDBTools dbTools, IEnumerable<DatasetInfo> datasetList, DirectoryInfo outputDirectory)
+        private bool CopyDatasetFiles(
+            IDBTools dbTools,
+            IEnumerable<DatasetInfo> datasetList,
+            DirectoryInfo outputDirectory,
+            out List<FileInfo> tempDirectoryFiles)
         {
             try
             {
@@ -85,20 +89,26 @@ namespace DMSDatasetRetriever
                 var searchSuccess = FindSourceFiles(dbTools, datasetList, out var sourceFilesByDataset);
 
                 if (!searchSuccess)
+                {
+                    tempDirectoryFiles = new List<FileInfo>();
                     return false;
+                }
 
-                return CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
+                return CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory, out tempDirectoryFiles);
             }
             catch (Exception ex)
             {
                 ReportError("Error in CopyDatasetFiles", ex);
+                tempDirectoryFiles = new List<FileInfo>();
                 return false;
             }
         }
 
         private bool CopyDatasetFilesToTarget(
-            Dictionary<DatasetInfo, List<DatasetFileOrDirectory>> sourceFilesByDataset,
-            DirectoryInfo outputDirectory)
+            Dictionary<DatasetInfo,
+                List<DatasetFileOrDirectory>> sourceFilesByDataset,
+            DirectoryInfo outputDirectory,
+            out List<FileInfo> tempDirectoryFiles)
         {
             try
             {
@@ -108,11 +118,14 @@ namespace DMSDatasetRetriever
                 fileCopyUtility.ProgressUpdate += FileCopyUtilityOnProgressUpdate;
                 fileCopyUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                return fileCopyUtility.CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
+                var success = fileCopyUtility.CopyDatasetFilesToTarget(sourceFilesByDataset, outputDirectory);
+                tempDirectoryFiles = fileCopyUtility.TempDirectoryFilesToDelete;
+                return success;
             }
             catch (Exception ex)
             {
                 ReportError("Error in CopyDatasetFilesToTarget", ex);
+                tempDirectoryFiles = new List<FileInfo>();
                 return false;
             }
         }
@@ -120,9 +133,13 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Create one or more checksum files (depending on Options.ChecksumFileMode)
         /// </summary>
-        /// <param name="datasetList"></param>
-        /// <param name="outputDirectory"></param>
-        private bool CreateChecksumFiles(IEnumerable<DatasetInfo> datasetList, FileSystemInfo outputDirectory)
+        /// <param name="datasetList">List of dataset info</param>
+        /// <param name="outputDirectory">Output directory</param>
+        /// <param name="tempDirectoryFiles">List of instrument files copied to the user's temp directory</param>
+        private bool CreateChecksumFiles(
+            IEnumerable<DatasetInfo> datasetList,
+            FileSystemInfo outputDirectory,
+            List<FileInfo> tempDirectoryFiles)
         {
             try
             {
@@ -138,7 +155,7 @@ namespace DMSDatasetRetriever
                 fileHashUtility.ProgressUpdate += FileHashUtilityOnProgressUpdate;
                 fileHashUtility.SkipConsoleWriteIfNoProgressListener = true;
 
-                return fileHashUtility.CreateChecksumFiles(datasetList, outputDirectory.FullName);
+                return fileHashUtility.CreateChecksumFiles(datasetList, outputDirectory.FullName, tempDirectoryFiles);
             }
             catch (Exception ex)
             {
@@ -953,15 +970,16 @@ namespace DMSDatasetRetriever
                 if (!success)
                     return false;
 
-                var copyFileSuccess = CopyDatasetFiles(dbTools, datasetList, outputDirectory);
+                var copyFileSuccess = CopyDatasetFiles(dbTools, datasetList, outputDirectory, out var tempDirectoryFiles);
 
                 if (!copyFileSuccess)
                     return false;
 
+                // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (Options.ChecksumFileMode == DatasetRetrieverOptions.ChecksumFileType.None)
                     return true;
 
-                return CreateChecksumFiles(datasetList, outputDirectory);
+                return CreateChecksumFiles(datasetList, outputDirectory, tempDirectoryFiles);
             }
             catch (Exception ex)
             {
