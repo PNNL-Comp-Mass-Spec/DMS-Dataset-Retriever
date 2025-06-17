@@ -380,11 +380,11 @@ namespace DMSDatasetRetriever
                         switch (ChecksumFileMode)
                         {
                             case DatasetRetrieverOptions.ChecksumFileType.MoTrPAC:
-                                ParseChecksumFileLineMoTrPAC(columnMap, lineParts);
+                                ParseChecksumFileLineMoTrPAC(checksumFile, columnMap, lineParts);
                                 break;
 
                             case DatasetRetrieverOptions.ChecksumFileType.CPTAC:
-                                ParseChecksumFileLineCPTAC(columnMap, lineParts);
+                                ParseChecksumFileLineCPTAC(checksumFile, columnMap, lineParts);
                                 break;
                         }
                     }
@@ -396,7 +396,12 @@ namespace DMSDatasetRetriever
             }
         }
 
-        private void ParseChecksumFileLineCPTAC(IReadOnlyDictionary<ChecksumFileColumns, int> columnMap, IReadOnlyList<string> lineParts)
+        // ReSharper disable once SuggestBaseTypeForParameter
+
+        private void ParseChecksumFileLineCPTAC(
+            FileInfo checksumFile,
+            IReadOnlyDictionary<ChecksumFileColumns, int> columnMap,
+            IReadOnlyList<string> lineParts)
         {
             var sha1 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.SHA1).Trim();
             var fileName = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename).Trim();
@@ -410,9 +415,11 @@ namespace DMSDatasetRetriever
 
             if (DataFileChecksums.ContainsKey(cleanFileName))
             {
-                OnDebugEvent(
-                    "Checksum file has multiple entries; skipping duplicate file {0} in directory {1}",
-                    cleanFileName, ChecksumFileDirectory.FullName);
+                OnWarningEvent(
+                    "Checksum file has multiple entries; skipping duplicate file {0} in directory {1} for checksum file {2}",
+                    cleanFileName, ChecksumFileDirectory.FullName, checksumFile.Name);
+
+                return;
             }
 
             if (DataFiles.Count > 0)
@@ -434,7 +441,12 @@ namespace DMSDatasetRetriever
             DataFileChecksums.Add(cleanFileName, fileChecksumInfo);
         }
 
-        private void ParseChecksumFileLineMoTrPAC(IReadOnlyDictionary<ChecksumFileColumns, int> columnMap, IReadOnlyList<string> lineParts)
+        // ReSharper disable once SuggestBaseTypeForParameter
+
+        private void ParseChecksumFileLineMoTrPAC(
+            FileInfo checksumFile,
+            IReadOnlyDictionary<ChecksumFileColumns, int> columnMap,
+            IReadOnlyList<string> lineParts)
         {
             var relativeFilePath = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename).Trim();
             var md5 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.MD5).Trim();
@@ -467,9 +479,9 @@ namespace DMSDatasetRetriever
 
             if (DataFileChecksums.ContainsKey(relativeFilePath))
             {
-                OnDebugEvent(
-                    "Checksum file has multiple entries; skipping duplicate file {0} in directory {1}",
-                    relativeFilePath, ChecksumFileDirectory.FullName);
+                OnWarningEvent(
+                    "Checksum file has multiple entries; skipping duplicate file {0} in directory {1} for checksum file {2}",
+                    relativeFilePath, ChecksumFileDirectory.FullName, checksumFile.Name);
 
                 return;
             }
