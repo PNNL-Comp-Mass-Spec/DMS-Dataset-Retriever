@@ -247,7 +247,7 @@ namespace DMSDatasetRetriever
                         throw new ArgumentOutOfRangeException();
                 }
 
-                var checksumFiles = new List<FileInfo>();
+                var checksumFiles = new SortedSet<FileInfo>();
                 var fileSpecMessage = string.Empty;
 
                 foreach (var directory in directoriesToCheck.Where(directory => directory.Exists))
@@ -307,7 +307,7 @@ namespace DMSDatasetRetriever
                     case 1:
                         OnDebugEvent(
                             "Loading existing checksum file{0}: {1}",
-                            fileSpecMessage, PathUtils.CompactPathString(checksumFiles[0].FullName, 100));
+                            fileSpecMessage, PathUtils.CompactPathString(checksumFiles.First().FullName, 100));
 
                         break;
 
@@ -339,7 +339,7 @@ namespace DMSDatasetRetriever
                     DataTableUtils.AddColumnNamesForIdentifier(columnNamesByIdentifier, ChecksumFileColumns.Comment, "tech_rep_comment");
 #pragma warning restore 618
 
-                    columnDelimiter = checksumFiles[0].Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
+                    columnDelimiter = checksumFiles.First().Extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) ? ',' : '\t';
                 }
 
                 foreach (var checksumFile in checksumFiles)
