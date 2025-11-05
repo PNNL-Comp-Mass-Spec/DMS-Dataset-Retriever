@@ -247,7 +247,7 @@ namespace DMSDatasetRetriever
                         throw new ArgumentOutOfRangeException();
                 }
 
-                var checksumFiles = new SortedSet<FileInfo>();
+                var checksumFiles = new SortedSet<FileInfo>(new FileInfoPathComparer());
                 var fileSpecMessage = string.Empty;
 
                 foreach (var directory in directoriesToCheck.Where(directory => directory.Exists))
@@ -659,6 +659,22 @@ namespace DMSDatasetRetriever
         public override string ToString()
         {
             return PathUtils.CompactPathString(ChecksumFilePath);
+        }
+
+        /// <summary>
+        /// Compare the full paths of two FileInfo objects
+        /// </summary>
+        public class FileInfoPathComparer : IComparer<FileInfo>
+        {
+            public int Compare(FileInfo x, FileInfo y)
+            {
+                if (x == null && y == null) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+
+                // Compare full file paths
+                return string.CompareOrdinal(x.FullName, y.FullName);
+            }
         }
     }
 }
