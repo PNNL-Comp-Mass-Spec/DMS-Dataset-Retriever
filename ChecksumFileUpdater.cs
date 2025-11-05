@@ -406,12 +406,7 @@ namespace DMSDatasetRetriever
             var sha1 = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.SHA1).Trim();
             var fileName = DataTableUtils.GetColumnValue(lineParts, columnMap, ChecksumFileColumns.Filename).Trim();
 
-            string cleanFileName;
-
-            if (fileName.StartsWith("*"))
-                cleanFileName = fileName.Substring(1);
-            else
-                cleanFileName = fileName;
+            var cleanFileName = fileName.StartsWith("*") ? fileName.Substring(1) : fileName;
 
             if (DataFileChecksums.ContainsKey(cleanFileName))
             {
