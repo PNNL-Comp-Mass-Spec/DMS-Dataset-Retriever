@@ -12,6 +12,8 @@ namespace DMSDatasetRetriever
     /// </summary>
     internal class ChecksumFileUpdater : EventNotifier
     {
+        // Ignore Spelling: Checksums
+
         private enum ChecksumFileColumns
         {
             /// <summary>
@@ -195,7 +197,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Load data from existing checksum files
         /// </summary>
-        /// <param name="warnExistingFileNotFound"></param>
+        /// <param name="warnExistingFileNotFound">When true, report a warning if an existing checksum file is not found</param>
         public void LoadExistingChecksumFiles(bool warnExistingFileNotFound = false)
         {
             try
@@ -493,7 +495,7 @@ namespace DMSDatasetRetriever
         /// <summary>
         /// Assure that directory separators in filePath are \ or /, depending on useLinuxSlashes
         /// </summary>
-        /// <param name="filePath"></param>
+        /// <param name="filePath">File path</param>
         /// <param name="useLinuxSlashes">When true, use / for directory separators; otherwise use \</param>
         public static string UpdatePathSeparators(string filePath, bool useLinuxSlashes = true)
         {
