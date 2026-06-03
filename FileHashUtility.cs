@@ -207,8 +207,13 @@ namespace DMSDatasetRetriever
                     "Data file not found; adding to batch file anyway, but upload error will occur: \n  " + sourceFileToUse.FullName);
             }
 
-            // Use "call cmd /c" because gsutil returns a non-zero exit code, and that will terminate a batch file
-            const string gsCopyCommand = "call cmd /c gsutil";
+            // Use "call cmd /c" because gsutil returns a non-zero exit code, and that will terminate a batch file (gcloud storage also returns a non-zero exit code)
+
+            // Copy command used prior to June 2026
+            // const string gsCopyCommand = "call cmd /c gsutil";
+
+            // Gsutil is deprecated; use "gcloud storage cp" instead of "gsutil cp" (as of June 2026)
+            const string gsCopyCommand = "call cmd /c gcloud storage cp";
 
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (string.IsNullOrWhiteSpace(md5Base64))
@@ -217,7 +222,11 @@ namespace DMSDatasetRetriever
             }
             else
             {
-                uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsCopyCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
+                // Gsutil version:
+                // uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsCopyCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
+
+                // Gcloud version
+                uploadCommand = string.Format("{0} --content-md5={1} {2} {3}", gsCopyCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
             }
 
             uploadCommands.Add(uploadCommand);
@@ -744,6 +753,10 @@ namespace DMSDatasetRetriever
                 writer.WriteLine("@echo off");
                 writer.WriteLine("echo Login using \"gcloud auth login\" (for MoTrPAC, login as matthew.monroe@pnnl.gov)");
                 writer.WriteLine();
+                writer.WriteLine("echo Disabling \"Parallel composite upload\" since MoTrPAC automation code does not support files uploaded that way");
+                writer.WriteLine("call cmd /c gcloud config set storage/parallel_composite_upload_enabled False");
+                writer.WriteLine();
+
                 writer.WriteLine("@echo on");
 
                 foreach (var item in uploadCommands)
