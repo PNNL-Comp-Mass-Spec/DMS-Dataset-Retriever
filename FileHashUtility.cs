@@ -208,16 +208,16 @@ namespace DMSDatasetRetriever
             }
 
             // Use "call cmd /c" because gsutil returns a non-zero exit code, and that will terminate a batch file
-            const string gsutilCommand = "call cmd /c gsutil";
+            const string gsCopyCommand = "call cmd /c gsutil";
 
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (string.IsNullOrWhiteSpace(md5Base64))
             {
-                uploadCommand = string.Format("{0} cp {1} {2}", gsutilCommand, sourceFileToUse.FullName, remoteUrl);
+                uploadCommand = string.Format("{0} cp {1} {2}", gsCopyCommand, sourceFileToUse.FullName, remoteUrl);
             }
             else
             {
-                uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsutilCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
+                uploadCommand = string.Format("{0} -h Content-MD5:{1} cp {2} {3}", gsCopyCommand, md5Base64, sourceFileToUse.FullName, remoteUrl);
             }
 
             uploadCommands.Add(uploadCommand);
