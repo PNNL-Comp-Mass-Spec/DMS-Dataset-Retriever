@@ -218,7 +218,11 @@ namespace DMSDatasetRetriever
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (string.IsNullOrWhiteSpace(md5Base64))
             {
-                uploadCommand = string.Format("{0} cp {1} {2}", gsCopyCommand, sourceFileToUse.FullName, remoteUrl);
+                // Gsutil version:
+                // uploadCommand = string.Format("{0} cp {1} {2}", gsCopyCommand, sourceFileToUse.FullName, remoteUrl);
+
+                // Gcloud version
+                uploadCommand = string.Format("{0} {1} {2}", gsCopyCommand, sourceFileToUse.FullName, remoteUrl);
             }
             else
             {
