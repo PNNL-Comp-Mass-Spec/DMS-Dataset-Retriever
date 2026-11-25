@@ -10,12 +10,12 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DatasetRetrieverOptions
     {
-        // Ignore Spelling: app, motrpac, pnnl, yyyy, conf, YYYYMMDD, yyyy-MM-dd
+        // Ignore Spelling: app, dms, dmsreader, motrpac, pnnl, yyyy, conf, YYYYMMDD, yyyy-MM-dd
 
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "June 3, 2026";
+        public const string PROGRAM_DATE = "November 24, 2026";
 
         /// <summary>
         /// Checksum file modes
@@ -118,7 +118,7 @@ namespace DMSDatasetRetriever
         /// </summary>
         /// <remarks>
         /// The default, which uses Server, Database, and Trusted_Connection, is equivalent to
-        /// Postgres:   host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=dmsreader;Password=dms4fun
+        /// PostgreSQL: host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=dmsreader;Password=dms4fun
         /// SQL Server: Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI
         /// </remarks>
         [Option("DMSConnectionString", "ConnectionString", "CN", HelpShowsDefault = false,

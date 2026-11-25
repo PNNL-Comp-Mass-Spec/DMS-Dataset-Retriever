@@ -14,7 +14,7 @@ namespace DMSDatasetRetriever
     /// </summary>
     public class DMSDatasetRetriever : EventNotifier
     {
-        // Ignore Spelling: purgeable
+        // Ignore Spelling: checksums, purgeable
 
         private enum DatasetInfoColumns
         {
@@ -829,17 +829,17 @@ namespace DMSDatasetRetriever
                     return relativeDirectoryPath.Substring(candidateRelativePathsToPrune[0].Length + 1);
 
                 default:
-                {
-                    // Find the longest entry in candidateRelativePathsToPrune
-                    // (from https://stackoverflow.com/a/7975983/1179467)
+                    {
+                        // Find the longest entry in candidateRelativePathsToPrune
+                        // (from https://stackoverflow.com/a/7975983/1179467)
 
-                    var pathToPrune = candidateRelativePathsToPrune.Aggregate(string.Empty, (max, cur) => max.Length > cur.Length ? max : cur);
+                        var pathToPrune = candidateRelativePathsToPrune.Aggregate(string.Empty, (max, cur) => max.Length > cur.Length ? max : cur);
 
-                    // Second, easier to read option:
-                    // pathToPrune = list.OrderByDescending(s => s.Length).First();
+                        // Second, easier to read option:
+                        // pathToPrune = list.OrderByDescending(s => s.Length).First();
 
-                    return relativeDirectoryPath.Substring(pathToPrune.Length + 1);
-                }
+                        return relativeDirectoryPath.Substring(pathToPrune.Length + 1);
+                    }
             }
         }
 
